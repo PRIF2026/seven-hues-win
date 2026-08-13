@@ -25,6 +25,12 @@ export const brl = (v: number) =>
 
 export const META_PONTOS = 50;
 export const MINIMO_SORTEIO = 15;
+export const MINIMO_VALOR_CARTELA = 35;
+
+/** Cartela apta ao sorteio: mínimo de pontos E somatório mínimo em produtos. */
+export function cartelaApta(pontos: number, valorGasto: number) {
+  return pontos >= MINIMO_SORTEIO && valorGasto >= MINIMO_VALOR_CARTELA;
+}
 
 export type Produto = {
   codigo: string;
