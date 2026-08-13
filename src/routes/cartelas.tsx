@@ -25,7 +25,7 @@ function Cartelas() {
     <>
       <PageHeader
         titulo="Cartela digital programada"
-        descricao={`Meta de 50 pontos. Participação no sorteio liberada a partir de ${MINIMO_SORTEIO} pontos.`}
+        descricao="Meta de 50 pontos."
         acoes={
           <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="rounded-lg border border-input bg-background px-3 py-2 text-sm">
             {STATUS.map((s) => <option key={s}>{s}</option>)}
