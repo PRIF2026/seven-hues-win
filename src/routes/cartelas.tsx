@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader, ProgressoPontos, SectionCard, Selo, StatusPill } from "@/components/cgs/ui-bits";
-import { CLIENTES, MINIMO_SORTEIO, SELOS, type SeloNumber } from "@/lib/cgs-data";
+import { brl, CLIENTES, MINIMO_SORTEIO, MINIMO_VALOR_CARTELA, SELOS, type SeloNumber } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/cartelas")({
   head: () => ({
@@ -37,6 +37,7 @@ function Cartelas() {
         {lista.map((c) => {
           const contagem = SELOS.map((s) => c.selos.filter((x) => x === s.n).length);
           const meta = c.pontos >= 50;
+          const valorOk = c.valorGasto >= MINIMO_VALOR_CARTELA;
           return (
             <article key={c.id} className="card-soft overflow-hidden rounded-xl border border-border bg-card">
               <div className="h-1.5 w-full rainbow-bar" />
@@ -60,11 +61,20 @@ function Cartelas() {
 
                 <ProgressoPontos pontos={c.pontos} />
 
+                <p className={valorOk
+                  ? "rounded-md bg-selo-4/12 px-2 py-1.5 text-xs font-medium text-selo-4"
+                  : "rounded-md bg-selo-1/12 px-2 py-1.5 text-xs font-medium text-selo-1"}>
+                  Somatório em produtos: {brl(c.valorGasto)} ·{" "}
+                  {valorOk
+                    ? `mínimo de ${brl(MINIMO_VALOR_CARTELA)} atingido`
+                    : `faltam ${brl(MINIMO_VALOR_CARTELA - c.valorGasto)} para o mínimo de ${brl(MINIMO_VALOR_CARTELA)}`}
+                </p>
+
                 {meta ? (
                   <p className="rounded-md bg-selo-4/15 px-2 py-1.5 text-center text-xs font-bold uppercase tracking-wide text-selo-4">
                     Meta atingida
                   </p>
-                ) : c.pontos >= MINIMO_SORTEIO ? (
+                ) : c.pontos >= MINIMO_SORTEIO && valorOk ? (
                   <p className="rounded-md bg-selo-5/15 px-2 py-1.5 text-center text-xs font-semibold text-selo-6">
                     Habilitada para sorteio (mín. 15 pontos)
                   </p>

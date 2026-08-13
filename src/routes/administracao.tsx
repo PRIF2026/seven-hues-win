@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, SectionCard, SeloLegenda } from "@/components/cgs/ui-bits";
-import { brl, LOGS, LOJAS, META_PONTOS, MINIMO_SORTEIO, USUARIOS } from "@/lib/cgs-data";
+import { brl, LOGS, LOJAS, META_PONTOS, MINIMO_SORTEIO, MINIMO_VALOR_CARTELA, USUARIOS } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/administracao")({
   head: () => ({
@@ -26,7 +26,7 @@ function Administracao() {
               ["Meta de pontos da cartela", `${META_PONTOS} pontos`],
               ["Mínimo para sorteio", `${MINIMO_SORTEIO} pontos`],
               ["Percentual destinado ao prêmio", "10%"],
-              ["Somatório mínimo da cartela", brl(35)],
+              ["Somatório mínimo da cartela", brl(MINIMO_VALOR_CARTELA)],
               ["Unidades iguais que geram 1 selo", "4 ou mais"],
               ["Validade da apresentação", "somente no dia sorteado"],
             ].map(([k, v]) => (

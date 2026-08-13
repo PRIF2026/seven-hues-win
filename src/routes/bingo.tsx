@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader, SectionCard, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, MINIMO_SORTEIO, SORTEIOS, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
+import { brl, cartelaApta, CLIENTES, MINIMO_SORTEIO, MINIMO_VALOR_CARTELA, SORTEIOS, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/bingo")({
@@ -24,7 +24,7 @@ function Bingo() {
   const [girando, setGirando] = useState(false);
 
   const cliente = CLIENTES.find((c) => c.id === clienteId)!;
-  const habilitado = cliente.pontos >= MINIMO_SORTEIO;
+  const habilitado = cartelaApta(cliente.pontos, cliente.valorGasto);
   const total = diasDoMes(9, 2026);
   const valor = numero ? (VALORES_DIA_PADRAO[numero] ?? 0) : 0;
 
@@ -78,7 +78,7 @@ function Bingo() {
               className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
             >
               {CLIENTES.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome} — {c.pontos} pts</option>
+                <option key={c.id} value={c.id}>{c.nome} — {c.pontos} pts · {brl(c.valorGasto)}</option>
               ))}
             </select>
 
@@ -96,7 +96,9 @@ function Bingo() {
 
             {!habilitado ? (
               <p className="mt-3 rounded-md bg-selo-1/12 px-2 py-2 text-xs font-medium text-selo-1">
-                Cartela inválida para sorteio: mínimo de {MINIMO_SORTEIO} pontos.
+                Cartela inválida para sorteio: exige mínimo de {MINIMO_SORTEIO} pontos e somatório de {brl(MINIMO_VALOR_CARTELA)} em produtos
+                {cliente.pontos < MINIMO_SORTEIO ? ` (faltam ${MINIMO_SORTEIO - cliente.pontos} pontos)` : ""}
+                {cliente.valorGasto < MINIMO_VALOR_CARTELA ? ` (faltam ${brl(MINIMO_VALOR_CARTELA - cliente.valorGasto)})` : ""}.
               </p>
             ) : null}
 

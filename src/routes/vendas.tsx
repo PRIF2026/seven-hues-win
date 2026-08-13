@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader, SectionCard, Selo } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, LOJAS, PRODUTOS, VENDAS, pontosDaVenda, seloPorPreco } from "@/lib/cgs-data";
+import { brl, CLIENTES, LOJAS, MINIMO_VALOR_CARTELA, PRODUTOS, VENDAS, pontosDaVenda, seloPorPreco } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/vendas")({
   head: () => ({
@@ -79,6 +79,9 @@ function Vendas() {
                   Regra aplicada: 4 ou mais unidades do mesmo produto na mesma compra contabilizam apenas 1 selo.
                 </p>
               ) : null}
+              <p className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
+                A cartela precisa somar no mínimo {brl(MINIMO_VALOR_CARTELA)} em produtos para valer no sorteio.
+              </p>
             </div>
 
             <button className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
