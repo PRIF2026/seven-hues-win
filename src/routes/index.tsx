@@ -29,7 +29,6 @@ const SELO_FILL = [
 function Dashboard() {
   const vendasDia = VENDAS_POR_DIA[VENDAS_POR_DIA.length - 1]?.valor ?? 0;
   const vendasMes = VENDAS_POR_DIA.reduce((a, b) => a + b.valor, 0);
-  const pontos = VENDAS_POR_DIA.reduce((a, b) => a + b.pontos, 0);
   const cheias = CLIENTES.filter((c) => c.pontos >= 50).length;
   const pagos = SORTEIOS.filter((s) => s.statusPremio === "Pago");
   const pendentes = SORTEIOS.filter((s) => s.statusPremio !== "Pago" && s.statusPremio !== "Expirado");
@@ -50,11 +49,10 @@ function Dashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Vendas do dia" valor={brl(vendasDia)} detalhe="4 filiais somadas" accent={1} icon={<ShoppingCart className="h-5 w-5" />} />
+        <StatCard label="Vendas do dia" valor={brl(vendasDia)} detalhe="4 lojas somadas" accent={1} icon={<ShoppingCart className="h-5 w-5" />} />
         <StatCard label="Vendas do mês" valor={brl(vendasMes)} detalhe="Agosto/2026" accent={2} icon={<ShoppingCart className="h-5 w-5" />} />
         <StatCard label="Total de clientes" valor={String(CLIENTES.length)} detalhe="cadastrados com carteira" accent={4} icon={<Users className="h-5 w-5" />} />
         <StatCard label="Cartelas ativas" valor={String(CLIENTES.filter((c) => c.status !== "Expirada" && c.status !== "Cancelada").length)} detalhe={`${cheias} com 50 pontos`} accent={6} icon={<Grid3x3 className="h-5 w-5" />} />
-        <StatCard label="Pontos distribuídos" valor={pontos.toLocaleString("pt-BR")} detalhe="últimos 7 dias" accent={3} />
         <StatCard label="Valor destinado aos prêmios" valor={brl(vendasMes * 0.1)} detalhe="10% das vendas de perfumaria" accent={5} />
         <StatCard label="Prêmios pagos" valor={brl(pagos.reduce((a, s) => a + s.valorOriginal, 0))} detalhe={`${pagos.length} pagamento(s)`} accent={4} icon={<Trophy className="h-5 w-5" />} />
         <StatCard label="Prêmios pendentes" valor={String(pendentes.length)} detalhe="aguardando apresentação/pagamento" accent={7} icon={<Trophy className="h-5 w-5" />} />
@@ -80,7 +78,7 @@ function Dashboard() {
           </div>
         </SectionCard>
 
-        <SectionCard titulo="Vendas por filial">
+        <SectionCard titulo="Vendas por loja">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={VENDAS_POR_FILIAL} layout="vertical" margin={{ left: 8 }}>
