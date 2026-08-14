@@ -68,18 +68,18 @@ export type Produto = {
 export const LOJAS = ["Loja 1", "Loja 2", "Loja 3", "Loja 4"];
 
 export const PRODUTOS: Produto[] = [
-  { codigo: "P-001", ean: "7891000100101", nome: "Sabonete Erva Doce 90g", marca: "Flora", categoria: "Higiene", preco: 1.3, estoque: 420, loja: "Matriz Centro", ativo: true },
-  { codigo: "P-002", ean: "7891000100118", nome: "Creme Dental Menta 90g", marca: "OralPlus", categoria: "Higiene", preco: 2.0, estoque: 380, loja: "Matriz Centro", ativo: true },
-  { codigo: "P-003", ean: "7891000100125", nome: "Desodorante Roll-on 50ml", marca: "Puravita", categoria: "Perfumaria", preco: 4.2, estoque: 210, loja: "Filial Norte", ativo: true },
-  { codigo: "P-004", ean: "7891000100132", nome: "Shampoo Cachos 350ml", marca: "Belle", categoria: "Cabelos", preco: 5.2, estoque: 160, loja: "Matriz Centro", ativo: true },
-  { codigo: "P-005", ean: "7891000100149", nome: "Condicionador Liso 350ml", marca: "Belle", categoria: "Cabelos", preco: 6.9, estoque: 145, loja: "Filial Sul", ativo: true },
-  { codigo: "P-006", ean: "7891000100156", nome: "Hidratante Corporal 200ml", marca: "Derma7", categoria: "Corpo", preco: 8.4, estoque: 98, loja: "Filial Shopping", ativo: true },
-  { codigo: "P-007", ean: "7891000100163", nome: "Óleo Capilar Argan 60ml", marca: "Belle", categoria: "Cabelos", preco: 9.9, estoque: 74, loja: "Matriz Centro", ativo: true },
-  { codigo: "P-008", ean: "7891000100170", nome: "Protetor Solar FPS 50", marca: "Derma7", categoria: "Corpo", preco: 12.5, estoque: 62, loja: "Filial Norte", ativo: true },
-  { codigo: "P-009", ean: "7891000100187", nome: "Perfume Floral 100ml", marca: "Essence", categoria: "Perfumaria", preco: 19.6, estoque: 40, loja: "Filial Shopping", ativo: true },
-  { codigo: "P-010", ean: "7891000100194", nome: "Colônia Cítrica 75ml", marca: "Essence", categoria: "Perfumaria", preco: 15.9, estoque: 55, loja: "Filial Sul", ativo: true },
-  { codigo: "P-011", ean: "7891000100200", nome: "Talco Refrescante 100g", marca: "Flora", categoria: "Higiene", preco: 3.4, estoque: 190, loja: "Filial Sul", ativo: false },
-  { codigo: "P-012", ean: "7891000100217", nome: "Sabonete Líquido 250ml", marca: "Flora", categoria: "Higiene", preco: 7.3, estoque: 133, loja: "Matriz Centro", ativo: true },
+  { codigo: "P-001", ean: "7891000100101", nome: "Sabonete Erva Doce 90g", marca: "Flora", categoria: "Higiene", preco: 1.3, estoque: 420, loja: "Loja 1" },
+  { codigo: "P-002", ean: "7891000100118", nome: "Creme Dental Menta 90g", marca: "OralPlus", categoria: "Higiene", preco: 2.0, estoque: 380, loja: "Loja 1" },
+  { codigo: "P-003", ean: "7891000100125", nome: "Desodorante Roll-on 50ml", marca: "Puravita", categoria: "Perfumaria", preco: 4.2, estoque: 210, loja: "Loja 2" },
+  { codigo: "P-004", ean: "7891000100132", nome: "Shampoo Cachos 350ml", marca: "Belle", categoria: "Cabelos", preco: 5.2, estoque: 160, loja: "Loja 1" },
+  { codigo: "P-005", ean: "7891000100149", nome: "Condicionador Liso 350ml", marca: "Belle", categoria: "Cabelos", preco: 6.9, estoque: 145, loja: "Loja 3" },
+  { codigo: "P-006", ean: "7891000100156", nome: "Hidratante Corporal 200ml", marca: "Derma7", categoria: "Corpo", preco: 8.4, estoque: 98, loja: "Loja 4" },
+  { codigo: "P-007", ean: "7891000100163", nome: "Óleo Capilar Argan 60ml", marca: "Belle", categoria: "Cabelos", preco: 9.9, estoque: 74, loja: "Loja 1" },
+  { codigo: "P-008", ean: "7891000100170", nome: "Protetor Solar FPS 50", marca: "Derma7", categoria: "Corpo", preco: 12.5, estoque: 62, loja: "Loja 2" },
+  { codigo: "P-009", ean: "7891000100187", nome: "Perfume Floral 100ml", marca: "Essence", categoria: "Perfumaria", preco: 19.6, estoque: 40, loja: "Loja 4" },
+  { codigo: "P-010", ean: "7891000100194", nome: "Colônia Cítrica 75ml", marca: "Essence", categoria: "Perfumaria", preco: 15.9, estoque: 55, loja: "Loja 3" },
+  { codigo: "P-011", ean: "7891000100200", nome: "Talco Refrescante 100g", marca: "Flora", categoria: "Higiene", preco: 3.4, estoque: 190, loja: "Loja 3" },
+  { codigo: "P-012", ean: "7891000100217", nome: "Sabonete Líquido 250ml", marca: "Flora", categoria: "Higiene", preco: 7.3, estoque: 133, loja: "Loja 1" },
 ];
 
 export type StatusCartela =
@@ -187,16 +187,16 @@ export type Venda = {
 };
 
 const vendasRaw: [string, string, string, string, string, string, number, number][] = [
-  ["V-9001", "2026-08-12", "09:14", "Matriz Centro", "Renata Alves", "Maria Aparecida Souza", 2, 0],
-  ["V-9002", "2026-08-12", "10:02", "Filial Norte", "Diego Souza", "João Batista Lima", 1, 8],
-  ["V-9003", "2026-08-12", "11:37", "Filial Sul", "Camila Reis", "Ana Clara Ferreira", 5, 1],
-  ["V-9004", "2026-08-12", "13:05", "Filial Shopping", "Tiago Lopes", "Fernanda Ribeiro", 1, 8],
-  ["V-9005", "2026-08-11", "15:44", "Matriz Centro", "Renata Alves", "Sérgio Tavares", 3, 6],
-  ["V-9006", "2026-08-11", "16:20", "Filial Norte", "Diego Souza", "Paulo Henrique Dias", 4, 3],
-  ["V-9007", "2026-08-11", "17:58", "Filial Sul", "Camila Reis", "Juliana Martins", 1, 9],
-  ["V-9008", "2026-08-10", "09:41", "Filial Shopping", "Tiago Lopes", "Beatriz Nogueira", 2, 5],
-  ["V-9009", "2026-08-10", "12:12", "Matriz Centro", "Renata Alves", "Carlos Eduardo Pinto", 1, 11],
-  ["V-9010", "2026-08-10", "18:31", "Filial Norte", "Diego Souza", "Roberto Almeida", 6, 2],
+  ["V-9001", "2026-08-12", "09:14", "Loja 1", "Renata Alves", "Maria Aparecida Souza", 2, 0],
+  ["V-9002", "2026-08-12", "10:02", "Loja 2", "Diego Souza", "João Batista Lima", 1, 8],
+  ["V-9003", "2026-08-12", "11:37", "Loja 3", "Camila Reis", "Ana Clara Ferreira", 5, 1],
+  ["V-9004", "2026-08-12", "13:05", "Loja 4", "Tiago Lopes", "Fernanda Ribeiro", 1, 8],
+  ["V-9005", "2026-08-11", "15:44", "Loja 1", "Renata Alves", "Sérgio Tavares", 3, 6],
+  ["V-9006", "2026-08-11", "16:20", "Loja 2", "Diego Souza", "Paulo Henrique Dias", 4, 3],
+  ["V-9007", "2026-08-11", "17:58", "Loja 3", "Camila Reis", "Juliana Martins", 1, 9],
+  ["V-9008", "2026-08-10", "09:41", "Loja 4", "Tiago Lopes", "Beatriz Nogueira", 2, 5],
+  ["V-9009", "2026-08-10", "12:12", "Loja 1", "Renata Alves", "Carlos Eduardo Pinto", 1, 11],
+  ["V-9010", "2026-08-10", "18:31", "Loja 2", "Diego Souza", "Roberto Almeida", 6, 2],
 ];
 
 export const VENDAS: Venda[] = vendasRaw.map(([id, data, hora, loja, func, cliente, qtd, pidx]) => {
