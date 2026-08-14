@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, SectionCard, SeloLegenda } from "@/components/cgs/ui-bits";
-import { brl, LOGS, LOJAS, META_PONTOS, MINIMO_SORTEIO, MINIMO_VALOR_CARTELA, USUARIOS } from "@/lib/cgs-data";
+import { brl, dataBr, LOGS, LOJAS, META_PONTOS, MINIMO_VALOR_CARTELA, MINIMO_VALOR_CARTELA_PADRAO, USUARIOS } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/administracao")({
   head: () => ({
@@ -24,9 +24,9 @@ function Administracao() {
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               ["Meta de pontos da cartela", `${META_PONTOS} pontos`],
-              ["Mínimo para sorteio", `${MINIMO_SORTEIO} pontos`],
+              ["Mínimo para sorteio", `${META_PONTOS} pontos`],
               ["Percentual destinado ao prêmio", "10%"],
-              ["Somatório mínimo da cartela", brl(MINIMO_VALOR_CARTELA)],
+              ["Somatório mínimo da cartela", brl(MINIMO_VALOR_CARTELA_PADRAO)],
               ["Unidades iguais que geram 1 selo", "4 ou mais"],
               ["Validade da apresentação", "somente no dia sorteado"],
             ].map(([k, v]) => (
@@ -37,6 +37,19 @@ function Administracao() {
             ))}
           </div>
           <button className="mt-4 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Salvar regras</button>
+
+          <div className="mt-6 rounded-lg border border-border p-3">
+            <h3 className="text-sm font-bold text-foreground">Regras da cartela programada</h3>
+            <label className="mt-3 block text-xs text-muted-foreground">
+              Somatório mínimo da cartela programada
+              <input defaultValue={brl(MINIMO_VALOR_CARTELA)} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium text-foreground" />
+            </label>
+            <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
+              <li>Com {brl(MINIMO_VALOR_CARTELA)} somados em produtos o cliente pode optar pela cartela programada e realizar o sorteio.</li>
+              <li>Ao sortear a data, ele tem até o dia sorteado para completar os {META_PONTOS} pontos.</li>
+              <li>Se não completar os pontos, não gostar do dia sorteado ou desistir, perde todos os pontos que já possui.</li>
+            </ul>
+          </div>
         </SectionCard>
 
         <SectionCard titulo="Lojas / filiais">
@@ -82,7 +95,7 @@ function Administracao() {
             <li key={l.data} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border p-3 text-sm">
               <div className="min-w-0">
                 <p className="truncate text-foreground">{l.acao}</p>
-                <p className="text-xs text-muted-foreground">{l.data} · {l.usuario}</p>
+                <p className="text-xs text-muted-foreground">{dataBr(l.data)} · {l.usuario}</p>
               </div>
               <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">{l.nivel}</span>
             </li>

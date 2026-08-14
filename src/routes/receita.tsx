@@ -49,7 +49,7 @@ function Receita() {
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard titulo="Receita por filial">
+        <SectionCard titulo="Receita por loja">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={VENDAS_POR_FILIAL} layout="vertical" margin={{ left: 8 }}>
@@ -68,7 +68,7 @@ function Receita() {
           <ol className="space-y-3 text-sm text-muted-foreground">
             {[
               "10% de todas as vendas de artigos de perfumaria do dia são destinados ao prêmio do mesmo dia do mês posterior.",
-              "Havendo mais de uma loja/filial, todas as vendas de perfumaria do dia são somadas na apuração.",
+              "Havendo mais de uma loja, todas as vendas de perfumaria do dia são somadas na apuração.",
               "Ao adquirir 4 ou mais unidades do mesmo produto na mesma compra, computa-se apenas um selo/pontuação.",
               "A cartela deve possuir no mínimo R$ 35,00 em produtos para determinadas regras de participação.",
             ].map((r, i) => (
@@ -87,7 +87,7 @@ function Receita() {
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <th className="py-2 pr-3">Dia</th><th className="py-2 pr-3">Vendas perfumaria</th>
-                <th className="py-2 pr-3">10% destinado</th><th className="py-2 pr-3">Pontos gerados</th>
+                <th className="py-2 pr-3">10% destinado</th>
                 <th className="py-2">Prêmio no mês posterior</th>
               </tr>
             </thead>
@@ -97,7 +97,6 @@ function Receita() {
                   <td className="py-2.5 pr-3 font-medium">{d.dia}</td>
                   <td className="py-2.5 pr-3">{brl(d.valor)}</td>
                   <td className="py-2.5 pr-3 font-semibold text-selo-4">{brl(d.fundo)}</td>
-                  <td className="py-2.5 pr-3">{d.pontos}</td>
                   <td className="py-2.5 text-muted-foreground">{d.dia.slice(0, 2)}/09</td>
                 </tr>
               ))}

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader, SectionCard, StatCard, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, SORTEIOS } from "@/lib/cgs-data";
+import { brl, dataBr, SORTEIOS } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/premios")({
   head: () => ({
@@ -63,8 +63,8 @@ function Premios() {
                   <td className="py-2.5 pr-3">{brl(s.valorOriginal)}</td>
                   <td className="py-2.5 pr-3">{s.ganhadores}</td>
                   <td className="py-2.5 pr-3 font-semibold">{brl(s.valorOriginal / s.ganhadores)}</td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">{s.dataSorteio}</td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">{s.pagamento ?? s.previsaoPagamento}</td>
+                  <td className="py-2.5 pr-3 text-muted-foreground">{dataBr(s.dataSorteio)}</td>
+                  <td className="py-2.5 pr-3 text-muted-foreground">{dataBr(s.pagamento ?? s.previsaoPagamento)}</td>
                   <td className="py-2.5 pr-3"><StatusPill status={s.statusPremio} /></td>
                   <td className="py-2.5">
                     <button

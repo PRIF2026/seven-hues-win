@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader, SectionCard, Selo } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, LOJAS, MINIMO_VALOR_CARTELA, PRODUTOS, VENDAS, pontosDaVenda, seloPorPreco } from "@/lib/cgs-data";
+import { brl, CLIENTES, dataBr, LOJAS, MINIMO_VALOR_CARTELA, PRODUTOS, VENDAS, pontosDaVenda, seloPorPreco, type Venda } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/vendas")({
   head: () => ({
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/vendas")({
 });
 
 function Vendas() {
+  const [vendas, setVendas] = useState<Venda[]>(VENDAS);
   const [produto, setProduto] = useState(PRODUTOS[0]!.codigo);
   const [qtd, setQtd] = useState(1);
   const [cliente, setCliente] = useState(CLIENTES[0]!.nome);
@@ -28,11 +29,29 @@ function Vendas() {
 
   const totais = useMemo(
     () => ({
-      valor: VENDAS.reduce((a, v) => a + v.unitario * v.qtd, 0),
-      pontos: VENDAS.reduce((a, v) => a + pontosDaVenda(v), 0),
+      valor: vendas.reduce((a, v) => a + v.unitario * v.qtd, 0),
+      pontos: vendas.reduce((a, v) => a + pontosDaVenda(v), 0),
     }),
-    [],
+    [vendas],
   );
+
+  const registrar = () => {
+    const agora = new Date();
+    const nova: Venda = {
+      id: `V-${9000 + vendas.length + 1}`,
+      data: agora.toISOString().slice(0, 10),
+      hora: agora.toTimeString().slice(0, 5),
+      loja,
+      funcionario: "Operador logado",
+      cliente,
+      produto: p.nome,
+      qtd,
+      unitario: p.preco,
+      selo,
+    };
+    setVendas((prev) => [nova, ...prev]);
+    setQtd(1);
+  };
 
   return (
     <>
@@ -56,7 +75,7 @@ function Vendas() {
             <div>
               <label className="text-xs font-medium text-muted-foreground">Produto</label>
               <select value={produto} onChange={(e) => setProduto(e.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                {PRODUTOS.filter((x) => x.ativo).map((x) => (
+                {PRODUTOS.map((x) => (
                   <option key={x.codigo} value={x.codigo}>{x.nome} — {brl(x.preco)}</option>
                 ))}
               </select>
@@ -84,7 +103,7 @@ function Vendas() {
               </p>
             </div>
 
-            <button className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
+            <button onClick={registrar} className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
               Registrar venda e lançar selo
             </button>
           </div>
@@ -102,10 +121,10 @@ function Vendas() {
                 </tr>
               </thead>
               <tbody>
-                {VENDAS.map((v) => (
+              {vendas.map((v) => (
                   <tr key={v.id} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-3 font-mono text-xs">{v.id}</td>
-                    <td className="py-2.5 pr-3">{v.data}</td>
+                    <td className="py-2.5 pr-3">{dataBr(v.data)}</td>
                     <td className="py-2.5 pr-3 text-muted-foreground">{v.hora}</td>
                     <td className="py-2.5 pr-3 text-muted-foreground">{v.loja}</td>
                     <td className="py-2.5 pr-3 text-muted-foreground">{v.funcionario}</td>

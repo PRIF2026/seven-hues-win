@@ -11,10 +11,12 @@ export function Selo({
   n,
   size = "md",
   faded = false,
+  titulo,
 }: {
   n: SeloNumber;
   size?: "sm" | "md" | "lg";
   faded?: boolean;
+  titulo?: string;
 }) {
   const sizes = {
     sm: "h-6 w-6 text-[11px]",
@@ -23,7 +25,7 @@ export function Selo({
   } as const;
   return (
     <span
-      title={`Selo ${n} — ${SELOS[n - 1]?.nome} (${SELOS[n - 1]?.faixa})`}
+      title={titulo ?? `Selo ${n} — ${SELOS[n - 1]?.nome} (${SELOS[n - 1]?.faixa})`}
       className={cn(
         "inline-grid shrink-0 place-items-center rounded-full font-display font-bold text-white ring-2 ring-white/70",
         SELO_BG[n],
