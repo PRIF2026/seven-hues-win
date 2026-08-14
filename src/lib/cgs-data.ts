@@ -23,13 +23,35 @@ export function seloPorPreco(preco: number): SeloNumber {
 export const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+/** Formata datas para dd/mm/aaaa (aceita "2026-08-12" ou "2026-08-12 10:22"). */
+export function dataBr(valor: string | null | undefined): string {
+  if (!valor) return "—";
+  const [dataParte, horaParte] = valor.trim().split(" ");
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dataParte ?? "");
+  if (!m) return valor;
+  const base = `${m[3]}/${m[2]}/${m[1]}`;
+  return horaParte ? `${base} ${horaParte}` : base;
+}
+
 export const META_PONTOS = 50;
-export const MINIMO_SORTEIO = 15;
+/** Somatório mínimo em produtos da cartela comum (meta de 50 pontos). */
+export const MINIMO_VALOR_CARTELA_PADRAO = 50;
+/** Somatório mínimo em produtos para a cartela programada. */
 export const MINIMO_VALOR_CARTELA = 35;
 
-/** Cartela apta ao sorteio: mínimo de pontos E somatório mínimo em produtos. */
+export type ModoSorteio = "50-pontos" | "programada";
+
+/** Elegibilidade: 50 pontos OU cartela programada (mínimo de R$ 35,00 somados). */
+export function elegibilidade(pontos: number, valorGasto: number) {
+  return {
+    meta: pontos >= META_PONTOS && valorGasto >= MINIMO_VALOR_CARTELA_PADRAO,
+    programada: valorGasto >= MINIMO_VALOR_CARTELA,
+  };
+}
+
 export function cartelaApta(pontos: number, valorGasto: number) {
-  return pontos >= MINIMO_SORTEIO && valorGasto >= MINIMO_VALOR_CARTELA;
+  const e = elegibilidade(pontos, valorGasto);
+  return e.meta || e.programada;
 }
 
 export type Produto = {
@@ -41,10 +63,9 @@ export type Produto = {
   preco: number;
   estoque: number;
   loja: string;
-  ativo: boolean;
 };
 
-export const LOJAS = ["Matriz Centro", "Filial Norte", "Filial Sul", "Filial Shopping"];
+export const LOJAS = ["Loja 1", "Loja 2", "Loja 3", "Loja 4"];
 
 export const PRODUTOS: Produto[] = [
   { codigo: "P-001", ean: "7891000100101", nome: "Sabonete Erva Doce 90g", marca: "Flora", categoria: "Higiene", preco: 1.3, estoque: 420, loja: "Matriz Centro", ativo: true },
