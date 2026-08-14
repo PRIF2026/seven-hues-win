@@ -123,11 +123,28 @@ const selosFake = (pontos: number): SeloNumber[] => {
   return out;
 };
 
+/** Datas de conquista dos selos, em ordem cronológica a partir do cadastro. */
+const selosComData = (cadastro: string, selos: SeloNumber[]) => {
+  const base = new Date(`${cadastro}T12:00:00`);
+  return selos.map((n, i) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + (i + 1) * 6 + (i % 3));
+    return { n, data: d.toISOString().slice(0, 10) };
+  });
+};
+
 const mk = (
   id: string, nome: string, cpf: string, tel: string, email: string, nasc: string,
   end: string, carteira: string, cadastro: string, pontos: number,
   status: StatusCartela, dataSorteada: string | null, numeroSorteado: number | null, valorGasto: number,
-): Cliente => ({ id, nome, cpf, telefone: tel, email, nascimento: nasc, endereco: end, carteira, cadastro, pontos, selos: selosFake(pontos), status, dataSorteada, numeroSorteado, valorGasto });
+): Cliente => {
+  const selos = selosFake(pontos);
+  return {
+    id, nome, associado: `AS-${id.slice(1).padStart(4, "0")}`, cpf, telefone: tel, email,
+    nascimento: nasc, endereco: end, carteira, cadastro, pontos, selos,
+    selosDetalhe: selosComData(cadastro, selos), status, dataSorteada, numeroSorteado, valorGasto,
+  };
+};
 
 export const CLIENTES: Cliente[] = [
   mk("C1", "Maria Aparecida Souza", "123.456.789-01", "(11) 98812-4410", "maria.souza@email.com", "1982-03-14", "Rua das Acácias, 120 – Centro", "CGS-000123", "2026-01-12", 50, "Premiada", "2026-09-15", 15, 412.7),
