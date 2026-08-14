@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader, ProgressoPontos, SectionCard, Selo, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, SORTEIOS, VENDAS, pontosDaVenda } from "@/lib/cgs-data";
+import { brl, CLIENTES, dataBr, SORTEIOS, VENDAS, pontosDaVenda, SELOS, type Cliente } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/clientes")({
   head: () => ({
@@ -15,29 +15,93 @@ export const Route = createFileRoute("/clientes")({
   component: Clientes,
 });
 
+const formVazio = {
+  nome: "", associado: "", cpf: "", telefone: "", email: "",
+  nascimento: "", endereco: "", carteira: "",
+};
+
 function Clientes() {
+  const [clientes, setClientes] = useState<Cliente[]>(CLIENTES);
   const [busca, setBusca] = useState("");
   const [sel, setSel] = useState(CLIENTES[0]!.id);
+  const [form, setForm] = useState({ ...formVazio });
 
   const lista = useMemo(
     () =>
-      CLIENTES.filter((c) =>
-        [c.nome, c.cpf, c.carteira].join(" ").toLowerCase().includes(busca.toLowerCase()),
+      clientes.filter((c) =>
+        [c.nome, c.cpf, c.carteira, c.associado].join(" ").toLowerCase().includes(busca.toLowerCase()),
       ),
-    [busca],
+    [clientes, busca],
   );
-  const cliente = CLIENTES.find((c) => c.id === sel)!;
+  const cliente = clientes.find((c) => c.id === sel) ?? clientes[0]!;
   const compras = VENDAS.filter((v) => v.cliente === cliente.nome);
   const sorteios = SORTEIOS.filter((s) => s.carteira === cliente.carteira);
+  const selosOrdenados = [...cliente.selosDetalhe].sort((a, b) => a.data.localeCompare(b.data));
+
+  const podeSalvar = form.nome.trim() !== "" && form.associado.trim() !== "";
+  const cadastrar = () => {
+    if (!podeSalvar) return;
+    const id = `N${clientes.length + 1}`;
+    const novo: Cliente = {
+      id,
+      nome: form.nome.trim(),
+      associado: form.associado.trim(),
+      cpf: form.cpf.trim() || "—",
+      telefone: form.telefone.trim() || "—",
+      email: form.email.trim() || "—",
+      nascimento: form.nascimento || "",
+      endereco: form.endereco.trim() || "—",
+      carteira: form.carteira.trim() || `CGS-${String(133 + clientes.length).padStart(6, "0")}`,
+      cadastro: new Date().toISOString().slice(0, 10),
+      pontos: 0,
+      selos: [],
+      selosDetalhe: [],
+      status: "Em andamento",
+      dataSorteada: null,
+      numeroSorteado: null,
+      valorGasto: 0,
+    };
+    setClientes((prev) => [novo, ...prev]);
+    setSel(id);
+    setForm({ ...formVazio });
+  };
 
   return (
     <>
-      <PageHeader titulo="Controle de clientes" descricao="Pesquise por nome, CPF ou número da carteira e acompanhe a carteira programada." />
+      <PageHeader titulo="Controle de clientes" descricao="Cadastre e pesquise clientes por nome, CPF, número de associado ou carteira." />
+
+      <SectionCard titulo="Cadastrar cliente">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {([
+            ["nome", "Nome completo", "text"],
+            ["associado", "ASSOCIADO NÚMERO", "text"],
+            ["cpf", "CPF", "text"],
+            ["telefone", "Telefone", "tel"],
+            ["email", "E-mail", "email"],
+            ["nascimento", "Data de nascimento", "date"],
+            ["endereco", "Endereço", "text"],
+            ["carteira", "Número da carteira", "text"],
+          ] as const).map(([k, label, tipo]) => (
+            <label key={k} className="block text-xs text-muted-foreground">
+              {label}
+              <input
+                type={tipo}
+                value={form[k]}
+                onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+            </label>
+          ))}
+        </div>
+        <button onClick={cadastrar} disabled={!podeSalvar} className="mt-4 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+          Cadastrar cliente
+        </button>
+      </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <SectionCard titulo={`Clientes (${lista.length})`}>
           <input
-            placeholder="Nome, CPF ou carteira"
+            placeholder="Nome, CPF, associado ou carteira"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="mb-3 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
@@ -53,7 +117,7 @@ function Clientes() {
                     <span className="truncate text-sm font-semibold text-foreground">{c.nome}</span>
                     <span className="shrink-0 font-display text-sm font-bold text-foreground">{c.pontos}</span>
                   </div>
-                  <span className="block truncate text-xs text-muted-foreground">{c.carteira} · {c.cpf}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{c.associado} · {c.carteira} · {c.cpf}</span>
                 </button>
               </li>
             ))}
@@ -65,14 +129,15 @@ function Clientes() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ["Nome", cliente.nome],
+                ["Associado número", cliente.associado],
                 ["CPF", cliente.cpf],
                 ["Telefone", cliente.telefone],
                 ["E-mail", cliente.email],
-                ["Nascimento", cliente.nascimento],
+                ["Nascimento", dataBr(cliente.nascimento)],
                 ["Endereço", cliente.endereco],
                 ["Número da carteira", cliente.carteira],
-                ["Data de cadastro", cliente.cadastro],
-                ["Data programada", cliente.dataSorteada ?? "Não sorteada"],
+                ["Data de cadastro", dataBr(cliente.cadastro)],
+                ["Data programada", cliente.dataSorteada ? dataBr(cliente.dataSorteada) : "Não sorteada"],
               ].map(([k, v]) => (
                 <div key={k} className="min-w-0">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">{k}</p>
@@ -83,8 +148,18 @@ function Clientes() {
             <div className="mt-4 rounded-lg border border-border p-3">
               <ProgressoPontos pontos={cliente.pontos} />
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {cliente.selos.map((s, i) => <Selo key={i} n={s} size="sm" />)}
+                {selosOrdenados.map((s, i) => (
+                  <Selo
+                    key={i}
+                    n={s.n}
+                    size="sm"
+                    titulo={`Selo ${s.n} (${SELOS[s.n - 1]?.nome}) · compra em ${dataBr(s.data)}`}
+                  />
+                ))}
               </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Selos em ordem cronológica — passe o mouse para ver a data da compra.
+              </p>
             </div>
           </SectionCard>
 
@@ -104,7 +179,7 @@ function Clientes() {
                   <tbody>
                     {compras.map((v) => (
                       <tr key={v.id} className="border-b border-border/60 last:border-0">
-                        <td className="py-2.5 pr-3">{v.data}</td>
+                        <td className="py-2.5 pr-3">{dataBr(v.data)}</td>
                         <td className="py-2.5 pr-3">{v.produto}</td>
                         <td className="py-2.5 pr-3">{v.qtd}</td>
                         <td className="py-2.5 pr-3">{brl(v.unitario * v.qtd)}</td>
@@ -130,7 +205,7 @@ function Clientes() {
                         Nº {s.numero} · dia {s.numero} de {s.mesReferencia} · {brl(s.valorOriginal / s.ganhadores)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Sorteio {s.dataSorteio} · {s.ganhadores} ganhador(es) · previsão {s.previsaoPagamento}
+                        Sorteio {dataBr(s.dataSorteio)} · {s.ganhadores} ganhador(es) · previsão {dataBr(s.previsaoPagamento)}
                       </p>
                     </div>
                     <StatusPill status={s.statusPremio} />
