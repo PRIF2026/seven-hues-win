@@ -94,6 +94,7 @@ export type StatusCartela =
 export type Cliente = {
   id: string;
   nome: string;
+  associado: string;
   cpf: string;
   telefone: string;
   email: string;
@@ -103,6 +104,7 @@ export type Cliente = {
   cadastro: string;
   pontos: number;
   selos: SeloNumber[];
+  selosDetalhe: { n: SeloNumber; data: string }[];
   status: StatusCartela;
   dataSorteada: string | null;
   numeroSorteado: number | null;
