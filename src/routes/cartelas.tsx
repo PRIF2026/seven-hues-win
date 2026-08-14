@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader, ProgressoPontos, SectionCard, Selo, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, MINIMO_SORTEIO, MINIMO_VALOR_CARTELA, SELOS, type SeloNumber } from "@/lib/cgs-data";
+import { brl, CLIENTES, dataBr, MINIMO_VALOR_CARTELA, SELOS, type SeloNumber } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/cartelas")({
   head: () => ({
@@ -24,7 +24,7 @@ function Cartelas() {
   return (
     <>
       <PageHeader
-        titulo="Cartela digital programada"
+        titulo="Cartela digital"
         descricao="Meta de 50 pontos."
         acoes={
           <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="rounded-lg border border-input bg-background px-3 py-2 text-sm">
@@ -45,7 +45,7 @@ function Cartelas() {
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-bold text-foreground">{c.nome}</h2>
-                    <p className="truncate text-xs text-muted-foreground">{c.carteira} · criada em {c.cadastro}</p>
+                    <p className="truncate text-xs text-muted-foreground">{c.carteira} · criada em {dataBr(c.cadastro)}</p>
                   </div>
                   <StatusPill status={meta ? "Premiada" : c.status} />
                 </div>
@@ -74,20 +74,16 @@ function Cartelas() {
                   <p className="rounded-md bg-selo-4/15 px-2 py-1.5 text-center text-xs font-bold uppercase tracking-wide text-selo-4">
                     Meta atingida
                   </p>
-                ) : c.pontos >= MINIMO_SORTEIO && valorOk ? (
-                  <p className="rounded-md bg-selo-5/15 px-2 py-1.5 text-center text-xs font-semibold text-selo-6">
-                    Habilitada para sorteio (mín. 15 pontos)
-                  </p>
                 ) : (
                   <p className="rounded-md bg-muted px-2 py-1.5 text-center text-xs text-muted-foreground">
-                    Faltam {MINIMO_SORTEIO - c.pontos} pontos para o mínimo de sorteio
+                    Faltam {50 - c.pontos} pontos para a meta de 50
                   </p>
                 )}
 
                 <dl className="grid grid-cols-2 gap-2 text-xs">
                   <div><dt className="text-muted-foreground">Selos</dt><dd className="font-semibold text-foreground">{c.selos.length}</dd></div>
                   <div><dt className="text-muted-foreground">Restantes</dt><dd className="font-semibold text-foreground">{Math.max(0, 50 - c.pontos)} pts</dd></div>
-                  <div><dt className="text-muted-foreground">Data sorteada</dt><dd className="font-semibold text-foreground">{c.dataSorteada ?? "—"}</dd></div>
+                  <div><dt className="text-muted-foreground">Data sorteada</dt><dd className="font-semibold text-foreground">{dataBr(c.dataSorteada)}</dd></div>
                   <div><dt className="text-muted-foreground">Nº sorteado</dt><dd className="font-semibold text-foreground">{c.numeroSorteado ?? "—"}</dd></div>
                 </dl>
               </div>
