@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { FileSpreadsheet, FileText } from "lucide-react";
 import { PageHeader, SectionCard, Selo } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, LOJAS, PRODUTOS, SELOS, VENDAS, pontosDaVenda, seloPorPreco, type SeloNumber } from "@/lib/cgs-data";
+import { brl, CLIENTES, dataBr, LOJAS, PRODUTOS, SELOS, VENDAS, pontosDaVenda, seloPorPreco, type SeloNumber } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
@@ -97,7 +97,7 @@ function Relatorios() {
             <tbody>
               {VENDAS.map((v) => (
                 <tr key={v.id} className="border-b border-border/60 last:border-0">
-                  <td className="py-2.5 pr-3">{v.data}</td>
+                  <td className="py-2.5 pr-3">{dataBr(v.data)}</td>
                   <td className="py-2.5 pr-3 text-muted-foreground">{v.loja}</td>
                   <td className="py-2.5 pr-3">{v.cliente}</td>
                   <td className="py-2.5 pr-3">{v.produto}</td>
