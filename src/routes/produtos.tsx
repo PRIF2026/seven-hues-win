@@ -1,45 +1,128 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader, SectionCard, Selo, SeloLegenda } from "@/components/cgs/ui-bits";
-import { brl, LOJAS, PRODUTOS, SELOS, seloPorPreco } from "@/lib/cgs-data";
+import { BarcodeScanner } from "@/components/cgs/barcode-scanner";
+import { brl, LOJAS, PRODUTOS, SELOS, seloPorPreco, type Produto } from "@/lib/cgs-data";
 
 export const Route = createFileRoute("/produtos")({
   head: () => ({
     meta: [
       { title: "Produtos · PROJETO 7 CORES – CGS" },
-      { name: "description", content: "Cadastro de produtos de perfumaria com selo e pontuação calculados automaticamente pelo preço." },
+      { name: "description", content: "Cadastro de produtos de perfumaria com leitor de código de barras e selo calculado automaticamente pelo preço." },
       { property: "og:title", content: "Produtos · PROJETO 7 CORES – CGS" },
-      { property: "og:description", content: "Cadastro de produtos com selo automático por faixa de preço." },
+      { property: "og:description", content: "Cadastro de produtos com leitor de código de barras e selo automático." },
     ],
   }),
   component: Produtos,
 });
 
+const vazio = { ean: "", nome: "", marca: "", categoria: "", preco: "", estoque: "", loja: LOJAS[0]! };
+
 function Produtos() {
+  const [produtos, setProdutos] = useState<Produto[]>(PRODUTOS);
   const [busca, setBusca] = useState("");
   const [loja, setLoja] = useState("Todas");
   const [preco, setPreco] = useState("2,00");
+  const [form, setForm] = useState({ ...vazio });
 
   const lista = useMemo(
     () =>
-      PRODUTOS.filter(
+      produtos.filter(
         (p) =>
           (loja === "Todas" || p.loja === loja) &&
           (p.nome.toLowerCase().includes(busca.toLowerCase()) ||
             p.codigo.toLowerCase().includes(busca.toLowerCase()) ||
             p.ean.includes(busca)),
       ),
-    [busca, loja],
+    [produtos, busca, loja],
   );
 
-  const simulado = seloPorPreco(Number(preco.replace(".", "").replace(",", ".")) || 0);
+  const numero = (v: string) => Number(v.replace(/\./g, "").replace(",", ".")) || 0;
+  const simulado = seloPorPreco(numero(preco));
+  const seloNovo = seloPorPreco(numero(form.preco));
+  const podeSalvar = form.nome.trim() !== "" && form.ean.trim() !== "" && numero(form.preco) > 0;
+
+  const salvar = () => {
+    if (!podeSalvar) return;
+    const codigo = `P-${String(produtos.length + 1).padStart(3, "0")}`;
+    setProdutos((prev) => [
+      {
+        codigo,
+        ean: form.ean.trim(),
+        nome: form.nome.trim(),
+        marca: form.marca.trim() || "—",
+        categoria: form.categoria.trim() || "Perfumaria",
+        preco: numero(form.preco),
+        estoque: Number(form.estoque) || 0,
+        loja: form.loja,
+      },
+      ...prev,
+    ]);
+    setForm({ ...vazio });
+  };
 
   return (
     <>
-      <PageHeader titulo="Cadastro de produtos" descricao="O número do selo e a pontuação são calculados automaticamente pelo preço." />
+      <PageHeader titulo="Cadastro de produtos" descricao="Leia o código de barras e o selo/pontuação são calculados automaticamente pelo preço." />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <SectionCard titulo="Simulador de selo" className="lg:col-span-1">
+        <SectionCard titulo="Novo produto" className="lg:col-span-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="block text-xs text-muted-foreground sm:col-span-2">
+              Código de barras
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <input
+                  value={form.ean}
+                  onChange={(e) => setForm({ ...form, ean: e.target.value })}
+                  placeholder="Bipe ou digite o código"
+                  className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                />
+                <BarcodeScanner onDetect={(c) => setForm((f) => ({ ...f, ean: c }))} />
+              </div>
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Nome do produto
+              <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Marca
+              <input value={form.marca} onChange={(e) => setForm({ ...form, marca: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Categoria
+              <input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Preço (R$)
+              <input value={form.preco} onChange={(e) => setForm({ ...form, preco: e.target.value })} placeholder="0,00" className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Estoque
+              <input type="number" min={0} value={form.estoque} onChange={(e) => setForm({ ...form, estoque: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+            </label>
+            <label className="block text-xs text-muted-foreground">
+              Loja
+              <select value={form.loja} onChange={(e) => setForm({ ...form, loja: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+                {LOJAS.map((l) => <option key={l}>{l}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+            <div className="flex items-center gap-3">
+              <Selo n={seloNovo} size="lg" />
+              <div className="min-w-0 text-sm">
+                <p className="font-semibold text-foreground">Selo {seloNovo} — {SELOS[seloNovo - 1]?.nome}</p>
+                <p className="text-xs text-muted-foreground">{SELOS[seloNovo - 1]?.faixa}</p>
+              </div>
+            </div>
+            <button onClick={salvar} disabled={!podeSalvar} className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+              Cadastrar produto
+            </button>
+          </div>
+        </SectionCard>
+
+        <SectionCard titulo="Simulador de selo">
           <label className="text-xs font-medium text-muted-foreground">Preço do produto (R$)</label>
           <input
             value={preco}
@@ -55,14 +138,11 @@ function Produtos() {
             </div>
           </div>
         </SectionCard>
-
-        <SectionCard titulo="Faixas de preço e pontuação" className="lg:col-span-2">
-          <SeloLegenda />
-          <p className="mt-3 text-xs text-muted-foreground">
-            Cada faixa define o número do selo (1 a 7) e a pontuação equivalente. Alterações de faixas são feitas pelo painel administrativo.
-          </p>
-        </SectionCard>
       </div>
+
+      <SectionCard titulo="Faixas de preço e pontuação">
+        <SeloLegenda />
+      </SectionCard>
 
       <SectionCard
         titulo={`Produtos participantes (${lista.length})`}
@@ -86,7 +166,7 @@ function Produtos() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full min-w-[860px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <th className="py-2 pr-3">Código</th>
@@ -98,8 +178,7 @@ function Produtos() {
                 <th className="py-2 pr-3">Selo</th>
                 <th className="py-2 pr-3">Pontos</th>
                 <th className="py-2 pr-3">Estoque</th>
-                <th className="py-2 pr-3">Loja</th>
-                <th className="py-2">Status</th>
+                <th className="py-2">Loja</th>
               </tr>
             </thead>
             <tbody>
@@ -116,10 +195,7 @@ function Produtos() {
                     <td className="py-2.5 pr-3"><Selo n={s} size="sm" /></td>
                     <td className="py-2.5 pr-3 font-semibold">{s}</td>
                     <td className="py-2.5 pr-3">{p.estoque}</td>
-                    <td className="py-2.5 pr-3 text-muted-foreground">{p.loja}</td>
-                    <td className="py-2.5 text-xs font-semibold">
-                      <span className={p.ativo ? "text-selo-4" : "text-muted-foreground"}>{p.ativo ? "Ativo" : "Inativo"}</span>
-                    </td>
+                    <td className="py-2.5 text-muted-foreground">{p.loja}</td>
                   </tr>
                 );
               })}
