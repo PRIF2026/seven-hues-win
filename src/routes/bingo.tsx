@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader, SectionCard, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, cartelaApta, CLIENTES, MINIMO_SORTEIO, MINIMO_VALOR_CARTELA, SORTEIOS, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
+import { brl, CLIENTES, dataBr, elegibilidade, META_PONTOS, MINIMO_VALOR_CARTELA, MINIMO_VALOR_CARTELA_PADRAO, type ModoSorteio, SORTEIOS, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/bingo")({
@@ -22,9 +22,11 @@ function Bingo() {
   const [clienteId, setClienteId] = useState(CLIENTES[1]!.id);
   const [numero, setNumero] = useState<number | null>(null);
   const [girando, setGirando] = useState(false);
+  const [modo, setModo] = useState<ModoSorteio>("50-pontos");
 
   const cliente = CLIENTES.find((c) => c.id === clienteId)!;
-  const habilitado = cartelaApta(cliente.pontos, cliente.valorGasto);
+  const apto = elegibilidade(cliente.pontos, cliente.valorGasto);
+  const habilitado = modo === "50-pontos" ? apto.meta : apto.programada;
   const total = diasDoMes(9, 2026);
   const valor = numero ? (VALORES_DIA_PADRAO[numero] ?? 0) : 0;
 
@@ -82,6 +84,28 @@ function Bingo() {
               ))}
             </select>
 
+            <fieldset className="mt-4 space-y-2">
+              <legend className="text-xs font-medium text-muted-foreground">Modalidade do sorteio</legend>
+              {([
+                { v: "50-pontos" as ModoSorteio, t: `${META_PONTOS} pontos`, d: `meta de ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados`, ok: apto.meta },
+                { v: "programada" as ModoSorteio, t: "Cartela programada", d: `mínimo de ${brl(MINIMO_VALOR_CARTELA)} em valor somado`, ok: apto.programada },
+              ]).map((o) => (
+                <label
+                  key={o.v}
+                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-2.5 text-xs ${modo === o.v ? "border-primary bg-accent" : "border-border"}`}
+                >
+                  <input type="radio" name="modo" className="mt-0.5" checked={modo === o.v} onChange={() => setModo(o.v)} />
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-foreground">{o.t}</span>
+                    <span className="block text-muted-foreground">{o.d}</span>
+                    <span className={o.ok ? "font-semibold text-selo-4" : "font-semibold text-selo-1"}>
+                      {o.ok ? "cliente enquadrado" : "cliente não enquadrado"}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
             <div className="mt-4 grid place-items-center rounded-xl border border-border p-6">
               <span
                 className="grid h-28 w-28 place-items-center rounded-full font-display text-4xl font-bold text-white"
@@ -96,9 +120,9 @@ function Bingo() {
 
             {!habilitado ? (
               <p className="mt-3 rounded-md bg-selo-1/12 px-2 py-2 text-xs font-medium text-selo-1">
-                Cartela inválida para sorteio: exige mínimo de {MINIMO_SORTEIO} pontos e somatório de {brl(MINIMO_VALOR_CARTELA)} em produtos
-                {cliente.pontos < MINIMO_SORTEIO ? ` (faltam ${MINIMO_SORTEIO - cliente.pontos} pontos)` : ""}
-                {cliente.valorGasto < MINIMO_VALOR_CARTELA ? ` (faltam ${brl(MINIMO_VALOR_CARTELA - cliente.valorGasto)})` : ""}.
+                Sem sorteio nesta modalidade. {modo === "50-pontos"
+                  ? `Exige ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados${cliente.pontos < META_PONTOS ? ` (faltam ${META_PONTOS - cliente.pontos} pontos)` : ""}.`
+                  : `A cartela programada exige ${brl(MINIMO_VALOR_CARTELA)} somados (faltam ${brl(Math.max(0, MINIMO_VALOR_CARTELA - cliente.valorGasto))}).`}
               </p>
             ) : null}
 
@@ -111,6 +135,7 @@ function Bingo() {
             </button>
             <p className="mt-2 text-[11px] text-muted-foreground">
               O cliente deve apresentar a cartela exatamente na data sorteada, sob pena de perda do prêmio.
+              {modo === "programada" ? ` Na cartela programada é preciso completar os ${META_PONTOS} pontos até o dia sorteado; em caso de desistência, todos os pontos são perdidos.` : ""}
             </p>
           </SectionCard>
         </div>
@@ -134,12 +159,12 @@ function Bingo() {
                   <td className="py-2.5 pr-3">{s.cliente}</td>
                   <td className="py-2.5 pr-3 font-mono text-xs text-muted-foreground">{s.carteira}</td>
                   <td className="py-2.5 pr-3 font-display font-bold">{s.numero}</td>
-                  <td className="py-2.5 pr-3">{s.dataSorteio}</td>
+                  <td className="py-2.5 pr-3">{dataBr(s.dataSorteio)}</td>
                   <td className="py-2.5 pr-3">{s.mesReferencia}</td>
                   <td className="py-2.5 pr-3">{brl(s.valorOriginal)}</td>
                   <td className="py-2.5 pr-3">{s.ganhadores}</td>
                   <td className="py-2.5 pr-3 font-semibold">{brl(s.valorOriginal / s.ganhadores)}</td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">{s.previsaoPagamento}</td>
+                  <td className="py-2.5 pr-3 text-muted-foreground">{dataBr(s.previsaoPagamento)}</td>
                   <td className="py-2.5"><StatusPill status={s.statusPremio} /></td>
                 </tr>
               ))}
