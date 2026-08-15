@@ -8,15 +8,21 @@ export const Route = createFileRoute("/bingo")({
   head: () => ({
     meta: [
       { title: "Bingo · PROJETO 7 CORES – CGS" },
-      { name: "description", content: "Módulo de bingo: o cliente sorteia um número que corresponde a um dia do mês seguinte e ao valor do prêmio." },
+      { name: "description", content: "O cliente sorteia um dia do mês posterior e descobre o valor do prêmio correspondente." },
       { property: "og:title", content: "Bingo · PROJETO 7 CORES – CGS" },
-      { property: "og:description", content: "Sorteio de números correspondentes aos dias do calendário e seus prêmios." },
+      { property: "og:description", content: "Sorteio de datas do mês posterior e seus prêmios." },
     ],
   }),
   component: Bingo,
 });
 
 const diasDoMes = (mes: number, ano: number) => new Date(ano, mes, 0).getDate();
+
+function mesPosterior(base = new Date()) {
+  const d = new Date(base);
+  d.setMonth(d.getMonth() + 1);
+  return { mes: d.getMonth() + 1, ano: d.getFullYear() };
+}
 
 function Bingo() {
   const [clienteId, setClienteId] = useState(CLIENTES[1]!.id);
@@ -27,7 +33,10 @@ function Bingo() {
   const cliente = CLIENTES.find((c) => c.id === clienteId)!;
   const apto = elegibilidade(cliente.pontos, cliente.valorGasto);
   const habilitado = modo === "50-pontos" ? apto.meta : apto.programada;
-  const total = diasDoMes(9, 2026);
+
+  const prox = mesPosterior();
+  const total = diasDoMes(prox.mes, prox.ano);
+  const mesPosteriorLabel = `${String(prox.mes).padStart(2, "0")}/${prox.ano}`;
   const valor = numero ? (VALORES_DIA_PADRAO[numero] ?? 0) : 0;
 
   const sortear = () => {
