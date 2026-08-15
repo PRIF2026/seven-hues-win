@@ -54,10 +54,10 @@ function Bingo() {
 
   return (
     <>
-      <PageHeader titulo="Bingo dos dias" descricao="Mês de referência: setembro/2026 — o número sorteado corresponde ao dia do mês seguinte." />
+      <PageHeader titulo="Bingo dos dias" descricao={`O número sorteado corresponde a um dia do mês posterior (${mesPosteriorLabel}).`} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <SectionCard titulo={`Cartela de números · ${total} dias no mês de referência`}>
+        <SectionCard titulo={`Dias do mês posterior · ${total} dias`}>
           <div className="grid grid-cols-6 gap-2 sm:grid-cols-8 lg:grid-cols-10">
             {Array.from({ length: total }, (_, i) => i + 1).map((n) => (
               <button
@@ -81,7 +81,7 @@ function Bingo() {
         </SectionCard>
 
         <div className="space-y-4">
-          <SectionCard titulo="Sortear número">
+          <SectionCard titulo="Sortear dia">
             <label className="text-xs font-medium text-muted-foreground">Cliente / cartela</label>
             <select
               value={clienteId}
@@ -123,7 +123,7 @@ function Bingo() {
                 {numero ?? "—"}
               </span>
               <p className="mt-3 text-center text-sm text-muted-foreground">
-                {numero ? <>Dia {numero} de 09/2026 · prêmio <strong className="text-foreground">{brl(valor)}</strong></> : "Nenhum número sorteado"}
+                {numero ? <>Dia {numero} de {mesPosteriorLabel} · prêmio <strong className="text-foreground">{brl(valor)}</strong></> : "Nenhum dia sorteado"}
               </p>
             </div>
 
@@ -140,7 +140,7 @@ function Bingo() {
               disabled={!habilitado || girando}
               className="mt-3 w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
             >
-              {girando ? "Sorteando..." : "Sortear número"}
+              {girando ? "Sorteando..." : "Sortear dia"}
             </button>
             <p className="mt-2 text-[11px] text-muted-foreground">
               O cliente deve apresentar a cartela exatamente na data sorteada, sob pena de perda do prêmio.
