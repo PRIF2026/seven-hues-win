@@ -8,15 +8,21 @@ export const Route = createFileRoute("/bingo")({
   head: () => ({
     meta: [
       { title: "Bingo · PROJETO 7 CORES – CGS" },
-      { name: "description", content: "Módulo de bingo: o cliente sorteia um número que corresponde a um dia do mês seguinte e ao valor do prêmio." },
+      { name: "description", content: "O cliente sorteia um dia do mês posterior e descobre o valor do prêmio correspondente." },
       { property: "og:title", content: "Bingo · PROJETO 7 CORES – CGS" },
-      { property: "og:description", content: "Sorteio de números correspondentes aos dias do calendário e seus prêmios." },
+      { property: "og:description", content: "Sorteio de datas do mês posterior e seus prêmios." },
     ],
   }),
   component: Bingo,
 });
 
 const diasDoMes = (mes: number, ano: number) => new Date(ano, mes, 0).getDate();
+
+function mesPosterior(base = new Date()) {
+  const d = new Date(base);
+  d.setMonth(d.getMonth() + 1);
+  return { mes: d.getMonth() + 1, ano: d.getFullYear() };
+}
 
 function Bingo() {
   const [clienteId, setClienteId] = useState(CLIENTES[1]!.id);
@@ -27,7 +33,10 @@ function Bingo() {
   const cliente = CLIENTES.find((c) => c.id === clienteId)!;
   const apto = elegibilidade(cliente.pontos, cliente.valorGasto);
   const habilitado = modo === "50-pontos" ? apto.meta : apto.programada;
-  const total = diasDoMes(9, 2026);
+
+  const prox = mesPosterior();
+  const total = diasDoMes(prox.mes, prox.ano);
+  const mesPosteriorLabel = `${String(prox.mes).padStart(2, "0")}/${prox.ano}`;
   const valor = numero ? (VALORES_DIA_PADRAO[numero] ?? 0) : 0;
 
   const sortear = () => {
@@ -45,10 +54,10 @@ function Bingo() {
 
   return (
     <>
-      <PageHeader titulo="Bingo dos dias" descricao="Mês de referência: setembro/2026 — o número sorteado corresponde ao dia do mês seguinte." />
+      <PageHeader titulo="Bingo dos dias" descricao={`O número sorteado corresponde a um dia do mês posterior (${mesPosteriorLabel}).`} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <SectionCard titulo={`Cartela de números · ${total} dias no mês de referência`}>
+        <SectionCard titulo={`Dias do mês posterior · ${total} dias`}>
           <div className="grid grid-cols-6 gap-2 sm:grid-cols-8 lg:grid-cols-10">
             {Array.from({ length: total }, (_, i) => i + 1).map((n) => (
               <button
@@ -72,7 +81,7 @@ function Bingo() {
         </SectionCard>
 
         <div className="space-y-4">
-          <SectionCard titulo="Sortear número">
+          <SectionCard titulo="Sortear dia">
             <label className="text-xs font-medium text-muted-foreground">Cliente / cartela</label>
             <select
               value={clienteId}
@@ -114,7 +123,7 @@ function Bingo() {
                 {numero ?? "—"}
               </span>
               <p className="mt-3 text-center text-sm text-muted-foreground">
-                {numero ? <>Dia {numero} de 09/2026 · prêmio <strong className="text-foreground">{brl(valor)}</strong></> : "Nenhum número sorteado"}
+                {numero ? <>Dia {numero} de {mesPosteriorLabel} · prêmio <strong className="text-foreground">{brl(valor)}</strong></> : "Nenhum dia sorteado"}
               </p>
             </div>
 
@@ -131,7 +140,7 @@ function Bingo() {
               disabled={!habilitado || girando}
               className="mt-3 w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
             >
-              {girando ? "Sorteando..." : "Sortear número"}
+              {girando ? "Sorteando..." : "Sortear dia"}
             </button>
             <p className="mt-2 text-[11px] text-muted-foreground">
               O cliente deve apresentar a cartela exatamente na data sorteada, sob pena de perda do prêmio.
