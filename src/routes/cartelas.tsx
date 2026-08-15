@@ -15,11 +15,16 @@ export const Route = createFileRoute("/cartelas")({
   component: Cartelas,
 });
 
-const STATUS = ["Todas", "Em andamento", "Pronta para sorteio", "Sorteada", "Premiada", "Prêmio recebido", "Expirada", "Cancelada"];
+const STATUS = ["Todas", "Meta atingida", "Cartela programada", "Sem sorteio"] as const;
 
 function Cartelas() {
   const [filtro, setFiltro] = useState("Todas");
-  const lista = CLIENTES.filter((c) => filtro === "Todas" || c.status === filtro);
+  const lista = CLIENTES.filter((c) => {
+    if (filtro === "Meta atingida") return c.pontos >= 50;
+    if (filtro === "Cartela programada") return c.pontos < 50 && c.programada;
+    if (filtro === "Sem sorteio") return c.pontos < 50 && !c.programada;
+    return true;
+  });
 
   return (
     <>
