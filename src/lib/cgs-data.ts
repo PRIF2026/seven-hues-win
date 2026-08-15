@@ -109,6 +109,8 @@ export type Cliente = {
   dataSorteada: string | null;
   numeroSorteado: number | null;
   valorGasto: number;
+  /** Optou pela modalidade "cartela programada" no sorteio. */
+  programada: boolean;
 };
 
 const selosFake = (pontos: number): SeloNumber[] => {
@@ -145,6 +147,7 @@ const mk = (
     id, nome, associado: `AS-${id.slice(1).padStart(4, "0")}`, cpf, telefone: tel, email,
     nascimento: nasc, endereco: end, carteira, cadastro, pontos, selos,
     selosDetalhe: selosComData(cadastro, selos), status, dataSorteada, numeroSorteado, valorGasto,
+    programada: dataSorteada !== null && pontos < META_PONTOS,
   };
 };
 

@@ -60,6 +60,7 @@ function Clientes() {
       dataSorteada: null,
       numeroSorteado: null,
       valorGasto: 0,
+      programada: false,
     };
     setClientes((prev) => [novo, ...prev]);
     setSel(id);
@@ -125,7 +126,7 @@ function Clientes() {
         </SectionCard>
 
         <div className="space-y-4">
-          <SectionCard titulo="Ficha do cliente" acao={<StatusPill status={cliente.status} />}>
+          <SectionCard titulo="Ficha do cliente">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ["Nome", cliente.nome],

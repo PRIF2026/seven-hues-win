@@ -4,7 +4,7 @@ import {
   Tooltip, XAxis, YAxis,
 } from "recharts";
 import { ShoppingCart, Users, Grid3x3, Trophy, TriangleAlert } from "lucide-react";
-import { PageHeader, StatCard, SectionCard, SeloLegenda, StatusPill, ProgressoPontos } from "@/components/cgs/ui-bits";
+import { PageHeader, StatCard, SectionCard, SeloLegenda, ProgressoPontos } from "@/components/cgs/ui-bits";
 import {
   brl, CLIENTES, PRODUTOS_MAIS_VENDIDOS, SORTEIOS, VENDAS_POR_DIA, VENDAS_POR_FILIAL,
 } from "@/lib/cgs-data";
@@ -137,10 +137,7 @@ function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {CLIENTES.slice(0, 6).map((c) => (
             <div key={c.id} className="rounded-lg border border-border p-3">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                <p className="truncate text-sm font-semibold text-foreground">{c.nome}</p>
-                <StatusPill status={c.status} />
-              </div>
+              <p className="truncate text-sm font-semibold text-foreground">{c.nome}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{c.carteira}</p>
               <div className="mt-3">
                 <ProgressoPontos pontos={c.pontos} />
