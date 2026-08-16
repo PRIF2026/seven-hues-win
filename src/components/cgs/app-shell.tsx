@@ -2,9 +2,11 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Package, Users, ShoppingCart, Grid3x3, Dices,
-  CalendarDays, Trophy, PiggyBank, FileBarChart, Settings, Menu, X, Bell,
+  CalendarDays, Trophy, PiggyBank, FileBarChart, Settings, Menu, X, Bell, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -127,13 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-selo-1" />
               </span>
-              <span className="hidden text-right text-xs sm:block">
-                <span className="block font-semibold text-foreground">Paulo R. Ferreira</span>
-                <span className="block text-muted-foreground">ADMINISTRADOR</span>
-              </span>
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-display text-xs font-bold text-primary-foreground">
-                PF
-              </span>
+              <Button variant="ghost" size="icon" aria-label="Sair" title="Sair" onClick={() => void supabase.auth.signOut()}><LogOut /></Button>
             </div>
           </div>
         </header>
