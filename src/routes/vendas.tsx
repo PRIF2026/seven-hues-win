@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { PageHeader, SectionCard, Selo } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, dataBr, LOJAS, MINIMO_VALOR_CARTELA, PRODUTOS, VENDAS, pontosDaVenda, seloPorPreco, type Venda } from "@/lib/cgs-data";
+import { brl, dataBr, MINIMO_VALOR_CARTELA, type SeloNumber } from "@/lib/cgs-data";
+import { supabase } from "@/integrations/supabase/client";
+import { cgsKeys, getErrorMessage, useClientes, useLojas, useProdutos, useVendas } from "@/lib/cgs-db";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/vendas")({
   head: () => ({
@@ -16,42 +21,38 @@ export const Route = createFileRoute("/vendas")({
 });
 
 function Vendas() {
-  const [vendas, setVendas] = useState<Venda[]>(VENDAS);
-  const [produto, setProduto] = useState(PRODUTOS[0]!.codigo);
+  const queryClient = useQueryClient();
+  const clientes = useClientes().data ?? [];
+  const lojas = useLojas().data ?? [];
+  const produtos = useProdutos().data ?? [];
+  const vendas = useVendas().data ?? [];
+  const [produto, setProduto] = useState("");
   const [qtd, setQtd] = useState(1);
-  const [cliente, setCliente] = useState(CLIENTES[0]!.nome);
-  const [loja, setLoja] = useState(LOJAS[0]!);
+  const [cliente, setCliente] = useState("");
+  const [loja, setLoja] = useState("");
 
-  const p = PRODUTOS.find((x) => x.codigo === produto)!;
-  const selo = seloPorPreco(p.preco);
+  const p = produtos.find((x) => x.id === produto) ?? produtos[0];
+  const selo = (p?.selo ?? 1) as SeloNumber;
   const pontos = qtd >= 4 ? selo : selo * qtd;
-  const total = p.preco * qtd;
+  const total = Number(p?.preco ?? 0) * qtd;
 
   const totais = useMemo(
     () => ({
-      valor: vendas.reduce((a, v) => a + v.unitario * v.qtd, 0),
-      pontos: vendas.reduce((a, v) => a + pontosDaVenda(v), 0),
+      valor: vendas.reduce((a, v) => a + Number(v.valor_unitario) * v.quantidade, 0),
+      pontos: vendas.reduce((a, v) => a + v.pontos, 0),
     }),
     [vendas],
   );
 
-  const registrar = () => {
-    const agora = new Date();
-    const nova: Venda = {
-      id: `V-${9000 + vendas.length + 1}`,
-      data: agora.toISOString().slice(0, 10),
-      hora: agora.toTimeString().slice(0, 5),
-      loja,
-      funcionario: "Operador logado",
-      cliente,
-      produto: p.nome,
-      qtd,
-      unitario: p.preco,
-      selo,
-    };
-    setVendas((prev) => [nova, ...prev]);
-    setQtd(1);
-  };
+  const registro = useMutation({
+    mutationFn: async () => {
+      if (!cliente || !loja || !p) throw new Error("Selecione cliente, loja e produto.");
+      const { error } = await supabase.rpc("registrar_venda", { p_cliente_id: cliente, p_loja_id: loja, p_produto_id: p.id, p_quantidade: qtd });
+      if (error) throw error;
+    },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: cgsKeys.all }); setQtd(1); toast.success("Venda, pontos e selos registrados."); },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
 
   return (
     <>
@@ -63,20 +64,20 @@ function Vendas() {
             <div>
               <label className="text-xs font-medium text-muted-foreground">Cliente</label>
               <select value={cliente} onChange={(e) => setCliente(e.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                {CLIENTES.map((c) => <option key={c.id}>{c.nome}</option>)}
+                <option value="">Selecione</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Loja / filial</label>
               <select value={loja} onChange={(e) => setLoja(e.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                {LOJAS.map((l) => <option key={l}>{l}</option>)}
+                <option value="">Selecione</option>{lojas.map((l) => <option key={l.id} value={l.id}>{l.nome}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Produto</label>
               <select value={produto} onChange={(e) => setProduto(e.target.value)} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                {PRODUTOS.map((x) => (
-                  <option key={x.codigo} value={x.codigo}>{x.nome} — {brl(x.preco)}</option>
+                 <option value="">Selecione</option>{produtos.map((x) => (
+                   <option key={x.id} value={x.id}>{x.nome} — {brl(Number(x.preco))}</option>
                 ))}
               </select>
             </div>
@@ -103,9 +104,7 @@ function Vendas() {
               </p>
             </div>
 
-            <button onClick={registrar} className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
-              Registrar venda e lançar selo
-            </button>
+             <Button onClick={() => registro.mutate()} disabled={!cliente || !loja || !p || registro.isPending} className="w-full">{registro.isPending ? "Registrando..." : "Registrar venda e lançar selo"}</Button>
           </div>
         </SectionCard>
 
@@ -125,16 +124,16 @@ function Vendas() {
                   <tr key={v.id} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-3 font-mono text-xs">{v.id}</td>
                     <td className="py-2.5 pr-3">{dataBr(v.data)}</td>
-                    <td className="py-2.5 pr-3 text-muted-foreground">{v.hora}</td>
-                    <td className="py-2.5 pr-3 text-muted-foreground">{v.loja}</td>
-                    <td className="py-2.5 pr-3 text-muted-foreground">{v.funcionario}</td>
-                    <td className="py-2.5 pr-3">{v.cliente}</td>
-                    <td className="py-2.5 pr-3">{v.produto}</td>
-                    <td className="py-2.5 pr-3">{v.qtd}</td>
-                    <td className="py-2.5 pr-3">{brl(v.unitario)}</td>
-                    <td className="py-2.5 pr-3 font-medium">{brl(v.unitario * v.qtd)}</td>
-                    <td className="py-2.5 pr-3"><Selo n={v.selo} size="sm" /></td>
-                    <td className="py-2.5 font-semibold">{pontosDaVenda(v)}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground">{v.created_at.slice(11, 16)}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground">{v.lojas?.nome ?? "—"}</td>
+                    <td className="py-2.5 pr-3 text-muted-foreground">Operador</td>
+                    <td className="py-2.5 pr-3">{v.clientes?.nome ?? "—"}</td>
+                    <td className="py-2.5 pr-3">{v.produtos?.nome ?? "—"}</td>
+                    <td className="py-2.5 pr-3">{v.quantidade}</td>
+                    <td className="py-2.5 pr-3">{brl(Number(v.valor_unitario))}</td>
+                    <td className="py-2.5 pr-3 font-medium">{brl(Number(v.valor_unitario) * v.quantidade)}</td>
+                    <td className="py-2.5 pr-3"><Selo n={v.selo as SeloNumber} size="sm" /></td>
+                    <td className="py-2.5 font-semibold">{v.pontos}</td>
                   </tr>
                 ))}
               </tbody>

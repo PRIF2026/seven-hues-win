@@ -60,6 +60,7 @@ function Clientes() {
     id: s.id, cliente: s.clientes?.nome ?? cliente.nome, carteira: s.carteira ?? cliente.carteira, numero: s.numero,
     mesReferencia: s.mes_referencia ?? "—", dataSorteio: s.data_sorteio, valorOriginal: Number(s.valor_original),
     ganhadores: s.ganhadores, previsaoPagamento: s.previsao_pagamento ?? "", statusPremio: s.status_premio as Sorteio["statusPremio"],
+    pagamento: null,
   })) : [];
   const selosOrdenados = cliente ? [...cliente.selosDetalhe].sort((a, b) => a.data.localeCompare(b.data)) : [];
 

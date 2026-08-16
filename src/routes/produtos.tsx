@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { PageHeader, SectionCard, Selo, SeloLegenda } from "@/components/cgs/ui-bits";
 import { BarcodeScanner } from "@/components/cgs/barcode-scanner";
-import { brl, LOJAS, PRODUTOS, SELOS, seloPorPreco, type Produto } from "@/lib/cgs-data";
+import { brl, SELOS, seloPorPreco } from "@/lib/cgs-data";
+import { supabase } from "@/integrations/supabase/client";
+import { cgsKeys, getErrorMessage, useLojas, useProdutos } from "@/lib/cgs-db";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/produtos")({
   head: () => ({
@@ -16,10 +21,18 @@ export const Route = createFileRoute("/produtos")({
   component: Produtos,
 });
 
-const vazio = { ean: "", nome: "", marca: "", categoria: "", preco: "", estoque: "", loja: LOJAS[0]! };
+const vazio = { ean: "", nome: "", marca: "", categoria: "", preco: "", estoque: "", loja: "" };
 
 function Produtos() {
-  const [produtos, setProdutos] = useState<Produto[]>(PRODUTOS);
+  const queryClient = useQueryClient();
+  const produtosQuery = useProdutos();
+  const lojasQuery = useLojas();
+  const lojas = lojasQuery.data ?? [];
+  const produtos = (produtosQuery.data ?? []).map((p) => ({
+    id: p.id, codigo: p.id.slice(0, 8).toUpperCase(), ean: p.codigo_barras ?? "—", nome: p.nome,
+    marca: p.marca ?? "—", categoria: p.categoria ?? "—", preco: Number(p.preco), estoque: p.estoque,
+    loja: p.lojas?.nome ?? "—", lojaId: p.loja_id,
+  }));
   const [busca, setBusca] = useState("");
   const [loja, setLoja] = useState("Todas");
   const [preco, setPreco] = useState("2,00");
@@ -42,24 +55,18 @@ function Produtos() {
   const seloNovo = seloPorPreco(numero(form.preco));
   const podeSalvar = form.nome.trim() !== "" && form.ean.trim() !== "" && numero(form.preco) > 0;
 
-  const salvar = () => {
-    if (!podeSalvar) return;
-    const codigo = `P-${String(produtos.length + 1).padStart(3, "0")}`;
-    setProdutos((prev) => [
-      {
-        codigo,
-        ean: form.ean.trim(),
-        nome: form.nome.trim(),
-        marca: form.marca.trim() || "—",
-        categoria: form.categoria.trim() || "Perfumaria",
-        preco: numero(form.preco),
-        estoque: Number(form.estoque) || 0,
-        loja: form.loja,
-      },
-      ...prev,
-    ]);
-    setForm({ ...vazio });
-  };
+  const cadastro = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("produtos").insert({
+        codigo_barras: form.ean.trim(), nome: form.nome.trim(), marca: form.marca.trim() || null,
+        categoria: form.categoria.trim() || "Perfumaria", preco: numero(form.preco),
+        estoque: Number(form.estoque) || 0, selo: seloNovo, loja_id: form.loja || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: cgsKeys.produtos }); setForm({ ...vazio }); toast.success("Produto cadastrado."); },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
 
   return (
     <>
@@ -103,7 +110,7 @@ function Produtos() {
             <label className="block text-xs text-muted-foreground">
               Loja
               <select value={form.loja} onChange={(e) => setForm({ ...form, loja: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
-                {LOJAS.map((l) => <option key={l}>{l}</option>)}
+                <option value="">Selecione</option>{lojas.map((l) => <option key={l.id} value={l.id}>{l.nome}</option>)}
               </select>
             </label>
           </div>
@@ -116,9 +123,7 @@ function Produtos() {
                 <p className="text-xs text-muted-foreground">{SELOS[seloNovo - 1]?.faixa}</p>
               </div>
             </div>
-            <button onClick={salvar} disabled={!podeSalvar} className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
-              Cadastrar produto
-            </button>
+            <Button onClick={() => cadastro.mutate()} disabled={!podeSalvar || cadastro.isPending}>{cadastro.isPending ? "Salvando..." : "Cadastrar produto"}</Button>
           </div>
         </SectionCard>
 
@@ -160,7 +165,7 @@ function Produtos() {
               className="rounded-lg border border-input bg-background px-2 py-1.5 text-xs"
             >
               <option>Todas</option>
-              {LOJAS.map((l) => <option key={l}>{l}</option>)}
+               {lojas.map((l) => <option key={l.id}>{l.nome}</option>)}
             </select>
           </div>
         }
