@@ -157,7 +157,7 @@ function Bingo() {
             {!habilitado ? (
               <p className="mt-3 rounded-md bg-selo-1/12 px-2 py-2 text-xs font-medium text-selo-1">
                 Sem sorteio nesta modalidade. {modo === "50-pontos"
-                  ? `Exige ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados${cliente.pontos < META_PONTOS ? ` (faltam ${META_PONTOS - cliente.pontos} pontos)` : ""}.`
+                  ? `Exige ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados${(cliente?.pontos ?? 0) < META_PONTOS ? ` (faltam ${META_PONTOS - (cliente?.pontos ?? 0)} pontos)` : ""}.`
                    : `A cartela programada exige ${brl(MINIMO_VALOR_CARTELA)} somados (faltam ${brl(Math.max(0, MINIMO_VALOR_CARTELA - Number(cliente?.valor_gasto ?? 0)))}).`}
               </p>
             ) : null}
