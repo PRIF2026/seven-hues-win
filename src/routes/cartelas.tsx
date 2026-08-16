@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader, ProgressoPontos, Selo } from "@/components/cgs/ui-bits";
-import { CLIENTES, dataBr, SELOS, type SeloNumber } from "@/lib/cgs-data";
+import { dataBr, SELOS, type SeloNumber } from "@/lib/cgs-data";
+import { useClientes } from "@/lib/cgs-db";
 
 export const Route = createFileRoute("/cartelas")({
   head: () => ({
@@ -19,7 +20,8 @@ const STATUS = ["Todas", "Meta atingida", "Cartela programada", "Sem sorteio"] a
 
 function Cartelas() {
   const [filtro, setFiltro] = useState("Todas");
-  const lista = CLIENTES.filter((c) => {
+  const clientes = useClientes().data ?? [];
+  const lista = clientes.filter((c) => {
     if (filtro === "Meta atingida") return c.pontos >= 50;
     if (filtro === "Cartela programada") return c.pontos < 50 && c.programada;
     if (filtro === "Sem sorteio") return c.pontos < 50 && !c.programada;
@@ -40,7 +42,7 @@ function Cartelas() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {lista.map((c) => {
-          const contagem = SELOS.map((s) => c.selos.filter((x) => x === s.n).length);
+           const contagem = SELOS.map((s) => c.selos_cliente.filter((x) => x.selo === s.n).length);
           const meta = c.pontos >= 50;
           const mostraData = meta || c.programada;
           return (
@@ -49,7 +51,7 @@ function Cartelas() {
               <div className="space-y-3 p-4">
                 <div className="min-w-0">
                     <h2 className="truncate text-sm font-bold text-foreground">{c.nome}</h2>
-                    <p className="truncate text-xs text-muted-foreground">{c.carteira} · criada em {dataBr(c.cadastro)}</p>
+                    <p className="truncate text-xs text-muted-foreground">{c.carteira ?? "—"} · criada em {dataBr(c.cadastro)}</p>
                 </div>
 
                 <div className="grid grid-cols-7 gap-1.5">
@@ -78,10 +80,10 @@ function Cartelas() {
                 )}
 
                 <dl className="grid grid-cols-2 gap-2 text-xs">
-                  <div><dt className="text-muted-foreground">Selos</dt><dd className="font-semibold text-foreground">{c.selos.length}</dd></div>
+                   <div><dt className="text-muted-foreground">Selos</dt><dd className="font-semibold text-foreground">{c.selos_cliente.length}</dd></div>
                   <div><dt className="text-muted-foreground">Restantes</dt><dd className="font-semibold text-foreground">{Math.max(0, 50 - c.pontos)} pts</dd></div>
-                  <div><dt className="text-muted-foreground">Data sorteada</dt><dd className="font-semibold text-foreground">{mostraData ? dataBr(c.dataSorteada) : "—"}</dd></div>
-                  <div><dt className="text-muted-foreground">Nº sorteado</dt><dd className="font-semibold text-foreground">{mostraData ? (c.numeroSorteado ?? "—") : "—"}</dd></div>
+                   <div><dt className="text-muted-foreground">Data sorteada</dt><dd className="font-semibold text-foreground">{mostraData ? dataBr(c.data_sorteada) : "—"}</dd></div>
+                   <div><dt className="text-muted-foreground">Nº sorteado</dt><dd className="font-semibold text-foreground">{mostraData ? (c.numero_sorteado ?? "—") : "—"}</dd></div>
                 </dl>
               </div>
             </article>

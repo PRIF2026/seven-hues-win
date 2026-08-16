@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { PageHeader, SectionCard, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, dataBr, elegibilidade, META_PONTOS, MINIMO_VALOR_CARTELA, MINIMO_VALOR_CARTELA_PADRAO, type ModoSorteio, SORTEIOS, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
+import { brl, dataBr, elegibilidade, META_PONTOS, MINIMO_VALOR_CARTELA, MINIMO_VALOR_CARTELA_PADRAO, type ModoSorteio, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { cgsKeys, getErrorMessage, useClientes, useSorteios } from "@/lib/cgs-db";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/bingo")({
   head: () => ({
@@ -25,19 +30,40 @@ function mesPosterior(base = new Date()) {
 }
 
 function Bingo() {
-  const [clienteId, setClienteId] = useState(CLIENTES[1]!.id);
+  const queryClient = useQueryClient();
+  const clientes = useClientes().data ?? [];
+  const sorteios = useSorteios().data ?? [];
+  const [clienteId, setClienteId] = useState("");
   const [numero, setNumero] = useState<number | null>(null);
   const [girando, setGirando] = useState(false);
   const [modo, setModo] = useState<ModoSorteio>("50-pontos");
 
-  const cliente = CLIENTES.find((c) => c.id === clienteId)!;
-  const apto = elegibilidade(cliente.pontos, cliente.valorGasto);
+  const cliente = clientes.find((c) => c.id === clienteId) ?? clientes[0];
+  const apto = elegibilidade(cliente?.pontos ?? 0, Number(cliente?.valor_gasto ?? 0));
   const habilitado = modo === "50-pontos" ? apto.meta : apto.programada;
 
   const prox = mesPosterior();
   const total = diasDoMes(prox.mes, prox.ano);
   const mesPosteriorLabel = `${String(prox.mes).padStart(2, "0")}/${prox.ano}`;
   const valor = numero ? (VALORES_DIA_PADRAO[numero] ?? 0) : 0;
+
+  const gravar = useMutation({
+    mutationFn: async (dia: number) => {
+      if (!cliente) throw new Error("Selecione um cliente.");
+      const dataSorteada = `${prox.ano}-${String(prox.mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+      const { error: sorteioError } = await supabase.from("sorteios").insert({
+        cliente_id: cliente.id, carteira: cliente.carteira, numero: dia, mes_referencia: mesPosteriorLabel,
+        modalidade: modo, valor_original: VALORES_DIA_PADRAO[dia] ?? 0,
+      });
+      if (sorteioError) throw sorteioError;
+      const { error: clienteError } = await supabase.from("clientes").update({
+        programada: modo === "programada", data_sorteada: dataSorteada, numero_sorteado: dia,
+      }).eq("id", cliente.id);
+      if (clienteError) throw clienteError;
+    },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: cgsKeys.all }); toast.success("Sorteio salvo."); },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
 
   const sortear = () => {
     if (!habilitado || girando) return;
@@ -48,6 +74,7 @@ function Bingo() {
       if (++i > 14) {
         clearInterval(t);
         setGirando(false);
+        setNumero((dia) => { if (dia) gravar.mutate(dia); return dia; });
       }
     }, 70);
   };
@@ -88,8 +115,8 @@ function Bingo() {
               onChange={(e) => { setClienteId(e.target.value); setNumero(null); }}
               className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
             >
-              {CLIENTES.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome} — {c.pontos} pts · {brl(c.valorGasto)}</option>
+              <option value="">Selecione</option>{clientes.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome} — {c.pontos} pts · {brl(Number(c.valor_gasto))}</option>
               ))}
             </select>
 
@@ -131,17 +158,17 @@ function Bingo() {
               <p className="mt-3 rounded-md bg-selo-1/12 px-2 py-2 text-xs font-medium text-selo-1">
                 Sem sorteio nesta modalidade. {modo === "50-pontos"
                   ? `Exige ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados${cliente.pontos < META_PONTOS ? ` (faltam ${META_PONTOS - cliente.pontos} pontos)` : ""}.`
-                  : `A cartela programada exige ${brl(MINIMO_VALOR_CARTELA)} somados (faltam ${brl(Math.max(0, MINIMO_VALOR_CARTELA - cliente.valorGasto))}).`}
+                   : `A cartela programada exige ${brl(MINIMO_VALOR_CARTELA)} somados (faltam ${brl(Math.max(0, MINIMO_VALOR_CARTELA - Number(cliente?.valor_gasto ?? 0)))}).`}
               </p>
             ) : null}
 
-            <button
+            <Button
               onClick={sortear}
-              disabled={!habilitado || girando}
-              className="mt-3 w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
+              disabled={!cliente || !habilitado || girando || gravar.isPending}
+              className="mt-3 w-full"
             >
               {girando ? "Sorteando..." : "Sortear dia"}
-            </button>
+            </Button>
             <p className="mt-2 text-[11px] text-muted-foreground">
               O cliente deve apresentar a cartela exatamente na data sorteada, sob pena de perda do prêmio.
               {modo === "programada" ? ` Na cartela programada é preciso completar os ${META_PONTOS} pontos até o dia sorteado; em caso de desistência, todos os pontos são perdidos.` : ""}
@@ -162,19 +189,19 @@ function Bingo() {
               </tr>
             </thead>
             <tbody>
-              {SORTEIOS.map((s) => (
+              {sorteios.map((s) => (
                 <tr key={s.id} className="border-b border-border/60 last:border-0">
                   <td className="py-2.5 pr-3 font-mono text-xs">{s.id}</td>
-                  <td className="py-2.5 pr-3">{s.cliente}</td>
-                  <td className="py-2.5 pr-3 font-mono text-xs text-muted-foreground">{s.carteira}</td>
+                  <td className="py-2.5 pr-3">{s.clientes?.nome ?? "—"}</td>
+                  <td className="py-2.5 pr-3 font-mono text-xs text-muted-foreground">{s.carteira ?? "—"}</td>
                   <td className="py-2.5 pr-3 font-display font-bold">{s.numero}</td>
-                  <td className="py-2.5 pr-3">{dataBr(s.dataSorteio)}</td>
-                  <td className="py-2.5 pr-3">{s.mesReferencia}</td>
-                  <td className="py-2.5 pr-3">{brl(s.valorOriginal)}</td>
+                  <td className="py-2.5 pr-3">{dataBr(s.data_sorteio)}</td>
+                  <td className="py-2.5 pr-3">{s.mes_referencia ?? "—"}</td>
+                  <td className="py-2.5 pr-3">{brl(Number(s.valor_original))}</td>
                   <td className="py-2.5 pr-3">{s.ganhadores}</td>
-                  <td className="py-2.5 pr-3 font-semibold">{brl(s.valorOriginal / s.ganhadores)}</td>
-                  <td className="py-2.5 pr-3 text-muted-foreground">{dataBr(s.previsaoPagamento)}</td>
-                  <td className="py-2.5"><StatusPill status={s.statusPremio} /></td>
+                  <td className="py-2.5 pr-3 font-semibold">{brl(Number(s.valor_original) / s.ganhadores)}</td>
+                  <td className="py-2.5 pr-3 text-muted-foreground">{dataBr(s.previsao_pagamento)}</td>
+                  <td className="py-2.5"><StatusPill status={s.status_premio as Parameters<typeof StatusPill>[0]["status"]} /></td>
                 </tr>
               ))}
             </tbody>
