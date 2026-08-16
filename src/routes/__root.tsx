@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "../components/cgs/app-shell";
 import { InstallPrompt } from "../components/cgs/install-prompt";
+import { AuthGate } from "../components/cgs/auth-gate";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -141,10 +143,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <AppShell>
-        <Outlet />
-      </AppShell>
+      <AuthGate>
+        <AppShell>
+          <Outlet />
+        </AppShell>
+      </AuthGate>
       <InstallPrompt />
+      <Toaster />
     </QueryClientProvider>
   );
 }
