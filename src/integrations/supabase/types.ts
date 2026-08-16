@@ -114,6 +114,8 @@ export type Database = {
           created_at: string
           estoque: number
           id: string
+          loja_id: string | null
+          marca: string | null
           nome: string
           preco: number
           selo: number
@@ -124,6 +126,8 @@ export type Database = {
           created_at?: string
           estoque?: number
           id?: string
+          loja_id?: string | null
+          marca?: string | null
           nome: string
           preco?: number
           selo?: number
@@ -134,11 +138,21 @@ export type Database = {
           created_at?: string
           estoque?: number
           id?: string
+          loja_id?: string | null
+          marca?: string | null
           nome?: string
           preco?: number
           selo?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produtos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selos_cliente: {
         Row: {
@@ -316,7 +330,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      registrar_venda: {
+        Args: {
+          p_cliente_id: string
+          p_loja_id: string
+          p_produto_id: string
+          p_quantidade: number
+        }
+        Returns: {
+          cliente_id: string | null
+          created_at: string
+          data: string
+          id: string
+          loja_id: string | null
+          pontos: number
+          produto_id: string | null
+          quantidade: number
+          selo: number
+          valor_unitario: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vendas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
