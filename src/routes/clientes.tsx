@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { PageHeader, ProgressoPontos, SectionCard, Selo, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, CLIENTES, dataBr, SORTEIOS, VENDAS, pontosDaVenda, SELOS, type Cliente } from "@/lib/cgs-data";
+import { brl, dataBr, pontosDaVenda, SELOS, type Cliente, type SeloNumber, type Venda, type Sorteio } from "@/lib/cgs-data";
+import { supabase } from "@/integrations/supabase/client";
+import { cgsKeys, getErrorMessage, useClientes, useSorteios, useVendas } from "@/lib/cgs-db";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/clientes")({
   head: () => ({
@@ -21,10 +26,23 @@ const formVazio = {
 };
 
 function Clientes() {
-  const [clientes, setClientes] = useState<Cliente[]>(CLIENTES);
+  const queryClient = useQueryClient();
+  const clientesQuery = useClientes();
+  const vendasQuery = useVendas();
+  const sorteiosQuery = useSorteios();
   const [busca, setBusca] = useState("");
-  const [sel, setSel] = useState(CLIENTES[0]!.id);
+  const [sel, setSel] = useState("");
   const [form, setForm] = useState({ ...formVazio });
+
+  const clientes: Cliente[] = (clientesQuery.data ?? []).map((c) => ({
+    id: c.id, nome: c.nome, associado: c.associado ?? "—", cpf: c.cpf ?? "—",
+    telefone: c.telefone ?? "—", email: c.email ?? "—", nascimento: c.nascimento ?? "",
+    endereco: c.endereco ?? "—", carteira: c.carteira ?? "—", cadastro: c.cadastro,
+    pontos: c.pontos, selos: c.selos_cliente.map((s) => s.selo as SeloNumber),
+    selosDetalhe: c.selos_cliente.map((s) => ({ n: s.selo as SeloNumber, data: s.data })),
+    status: "Em andamento", dataSorteada: c.data_sorteada, numeroSorteado: c.numero_sorteado,
+    valorGasto: Number(c.valor_gasto), programada: c.programada,
+  }));
 
   const lista = useMemo(
     () =>
@@ -33,39 +51,33 @@ function Clientes() {
       ),
     [clientes, busca],
   );
-  const cliente = clientes.find((c) => c.id === sel) ?? clientes[0]!;
-  const compras = VENDAS.filter((v) => v.cliente === cliente.nome);
-  const sorteios = SORTEIOS.filter((s) => s.carteira === cliente.carteira);
-  const selosOrdenados = [...cliente.selosDetalhe].sort((a, b) => a.data.localeCompare(b.data));
+  const cliente = clientes.find((c) => c.id === sel) ?? clientes[0];
+  const compras: Venda[] = cliente ? (vendasQuery.data ?? []).filter((v) => v.cliente_id === cliente.id).map((v) => ({
+    id: v.id, data: v.data, hora: v.created_at.slice(11, 16), loja: v.lojas?.nome ?? "—", funcionario: "Operador",
+    cliente: v.clientes?.nome ?? "—", produto: v.produtos?.nome ?? "—", qtd: v.quantidade, unitario: Number(v.valor_unitario), selo: v.selo as SeloNumber,
+  })) : [];
+  const sorteios: Sorteio[] = cliente ? (sorteiosQuery.data ?? []).filter((s) => s.cliente_id === cliente.id).map((s) => ({
+    id: s.id, cliente: s.clientes?.nome ?? cliente.nome, carteira: s.carteira ?? cliente.carteira, numero: s.numero,
+    mesReferencia: s.mes_referencia ?? "—", dataSorteio: s.data_sorteio, valorOriginal: Number(s.valor_original),
+    ganhadores: s.ganhadores, previsaoPagamento: s.previsao_pagamento ?? "", statusPremio: s.status_premio as Sorteio["statusPremio"],
+  })) : [];
+  const selosOrdenados = cliente ? [...cliente.selosDetalhe].sort((a, b) => a.data.localeCompare(b.data)) : [];
 
   const podeSalvar = form.nome.trim() !== "" && form.associado.trim() !== "";
-  const cadastrar = () => {
-    if (!podeSalvar) return;
-    const id = `N${clientes.length + 1}`;
-    const novo: Cliente = {
-      id,
-      nome: form.nome.trim(),
-      associado: form.associado.trim(),
-      cpf: form.cpf.trim() || "—",
-      telefone: form.telefone.trim() || "—",
-      email: form.email.trim() || "—",
-      nascimento: form.nascimento || "",
-      endereco: form.endereco.trim() || "—",
-      carteira: form.carteira.trim() || `CGS-${String(133 + clientes.length).padStart(6, "0")}`,
-      cadastro: new Date().toISOString().slice(0, 10),
-      pontos: 0,
-      selos: [],
-      selosDetalhe: [],
-      status: "Em andamento",
-      dataSorteada: null,
-      numeroSorteado: null,
-      valorGasto: 0,
-      programada: false,
-    };
-    setClientes((prev) => [novo, ...prev]);
-    setSel(id);
-    setForm({ ...formVazio });
-  };
+  const cadastro = useMutation({
+    mutationFn: async () => {
+      const carteira = form.carteira.trim() || `CGS-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+      const { data, error } = await supabase.from("clientes").insert({
+        nome: form.nome.trim(), associado: form.associado.trim(), cpf: form.cpf.trim() || null,
+        telefone: form.telefone.trim() || null, email: form.email.trim() || null,
+        nascimento: form.nascimento || null, endereco: form.endereco.trim() || null, carteira,
+      }).select("id").single();
+      if (error) throw error;
+      return data.id;
+    },
+    onSuccess: async (id) => { await queryClient.invalidateQueries({ queryKey: cgsKeys.clientes }); setSel(id); setForm({ ...formVazio }); toast.success("Cliente cadastrado."); },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
 
   return (
     <>
@@ -94,9 +106,7 @@ function Clientes() {
             </label>
           ))}
         </div>
-        <button onClick={cadastrar} disabled={!podeSalvar} className="mt-4 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
-          Cadastrar cliente
-        </button>
+        <Button onClick={() => cadastro.mutate()} disabled={!podeSalvar || cadastro.isPending} className="mt-4">{cadastro.isPending ? "Salvando..." : "Cadastrar cliente"}</Button>
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -125,7 +135,7 @@ function Clientes() {
           </ul>
         </SectionCard>
 
-        <div className="space-y-4">
+        {cliente ? <div className="space-y-4">
           <SectionCard titulo="Ficha do cliente">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -136,7 +146,7 @@ function Clientes() {
                 ["E-mail", cliente.email],
                 ["Nascimento", dataBr(cliente.nascimento)],
                 ["Endereço", cliente.endereco],
-                ["Número da carteira", cliente.carteira],
+                ["Número da cartela", cliente.carteira],
                 ["Data de cadastro", dataBr(cliente.cadastro)],
                 ["Data programada", cliente.dataSorteada ? dataBr(cliente.dataSorteada) : "Não sorteada"],
               ].map(([k, v]) => (
@@ -215,7 +225,7 @@ function Clientes() {
               </ul>
             )}
           </SectionCard>
-        </div>
+        </div> : <SectionCard titulo="Ficha do cliente"><p className="text-sm text-muted-foreground">Cadastre o primeiro cliente para começar.</p></SectionCard>}
       </div>
     </>
   );
