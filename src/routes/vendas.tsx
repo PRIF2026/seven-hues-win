@@ -33,7 +33,7 @@ function Vendas() {
 
   const p = produtos.find((x) => x.id === produto) ?? produtos[0];
   const selo = (p?.selo ?? 1) as SeloNumber;
-  const pontos = qtd >= 4 ? selo : selo * qtd;
+  const pontos = selo * Math.min(qtd, 2);
   const total = Number(p?.preco ?? 0) * qtd;
 
   const totais = useMemo(
@@ -94,9 +94,9 @@ function Vendas() {
                   <p className="text-muted-foreground">Pontuação gerada: <strong className="text-foreground">{pontos}</strong></p>
                 </div>
               </div>
-              {qtd >= 4 ? (
+              {qtd >= 3 ? (
                 <p className="mt-3 rounded-md bg-selo-3/25 px-2 py-1.5 text-xs font-medium text-foreground">
-                  Regra aplicada: 4 ou mais unidades do mesmo produto na mesma compra contabilizam apenas 1 selo.
+                  Regra aplicada: a partir de 3 unidades iguais na mesma compra e no mesmo dia, a pontuação fica limitada a 2 selos.
                 </p>
               ) : null}
               <p className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
