@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatusPill } from "@/components/cgs/ui-bits";
-import { brl, dataBr, elegibilidade, META_PONTOS, MINIMO_VALOR_CARTELA, MINIMO_VALOR_CARTELA_PADRAO, type ModoSorteio, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
+import { brl, dataBr, elegibilidade, fundoCliente, META_PONTOS, MINIMO_VALOR_CARTELA, MINIMO_VALOR_CARTELA_PADRAO, type ModoSorteio, VALORES_DIA_PADRAO } from "@/lib/cgs-data";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { cgsKeys, getErrorMessage, useClientes, useSorteios } from "@/lib/cgs-db";
@@ -124,7 +124,7 @@ function Bingo() {
               <legend className="text-xs font-medium text-muted-foreground">Modalidade do sorteio</legend>
               {([
                 { v: "50-pontos" as ModoSorteio, t: `${META_PONTOS} pontos`, d: `meta de ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados`, ok: apto.meta },
-                { v: "programada" as ModoSorteio, t: "Cartela programada", d: `mínimo de ${brl(MINIMO_VALOR_CARTELA)} em valor somado`, ok: apto.programada },
+                { v: "programada" as ModoSorteio, t: "Cartela programada", d: `mínimo de ${brl(MINIMO_VALOR_CARTELA)} acumulados no fundo (10% das compras)`, ok: apto.programada },
               ]).map((o) => (
                 <label
                   key={o.v}
@@ -158,7 +158,7 @@ function Bingo() {
               <p className="mt-3 rounded-md bg-selo-1/12 px-2 py-2 text-xs font-medium text-selo-1">
                 Sem sorteio nesta modalidade. {modo === "50-pontos"
                   ? `Exige ${META_PONTOS} pontos e ${brl(MINIMO_VALOR_CARTELA_PADRAO)} somados${(cliente?.pontos ?? 0) < META_PONTOS ? ` (faltam ${META_PONTOS - (cliente?.pontos ?? 0)} pontos)` : ""}.`
-                   : `A cartela programada exige ${brl(MINIMO_VALOR_CARTELA)} somados (faltam ${brl(Math.max(0, MINIMO_VALOR_CARTELA - Number(cliente?.valor_gasto ?? 0)))}).`}
+                   : `A cartela programada exige ${brl(MINIMO_VALOR_CARTELA)} no fundo de 10%. Acumulado: ${brl(fundoCliente(Number(cliente?.valor_gasto ?? 0)))} (faltam ${brl(Math.max(0, MINIMO_VALOR_CARTELA - fundoCliente(Number(cliente?.valor_gasto ?? 0))))}).`}
               </p>
             ) : null}
 
