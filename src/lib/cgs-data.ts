@@ -36,16 +36,21 @@ export function dataBr(valor: string | null | undefined): string {
 export const META_PONTOS = 50;
 /** Somatório mínimo em produtos da cartela comum (meta de 50 pontos). */
 export const MINIMO_VALOR_CARTELA_PADRAO = 50;
-/** Somatório mínimo em produtos para a cartela programada. */
+/** Percentual das vendas destinado ao fundo de prêmios. */
+export const PERCENTUAL_FUNDO = 0.1;
+/** Mínimo acumulado no fundo (10% das compras) para a cartela programada. */
 export const MINIMO_VALOR_CARTELA = 35;
 
 export type ModoSorteio = "50-pontos" | "programada";
 
-/** Elegibilidade: 50 pontos OU cartela programada (mínimo de R$ 35,00 somados). */
+/** Valor acumulado no fundo de prêmios pelo cliente (10% do que ele gastou). */
+export const fundoCliente = (valorGasto: number) => valorGasto * PERCENTUAL_FUNDO;
+
+/** Elegibilidade: 50 pontos OU cartela programada (R$ 35,00 acumulados no fundo de 10%). */
 export function elegibilidade(pontos: number, valorGasto: number) {
   return {
     meta: pontos >= META_PONTOS && valorGasto >= MINIMO_VALOR_CARTELA_PADRAO,
-    programada: valorGasto >= MINIMO_VALOR_CARTELA,
+    programada: fundoCliente(valorGasto) >= MINIMO_VALOR_CARTELA,
   };
 }
 

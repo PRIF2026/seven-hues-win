@@ -41,11 +41,11 @@ function Administracao() {
           <div className="mt-6 rounded-lg border border-border p-3">
             <h3 className="text-sm font-bold text-foreground">Regras da cartela programada</h3>
             <label className="mt-3 block text-xs text-muted-foreground">
-              Somatório mínimo da cartela programada
+              Mínimo acumulado no fundo (10% das compras) para a cartela programada
               <input defaultValue={brl(MINIMO_VALOR_CARTELA)} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium text-foreground" />
             </label>
             <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
-              <li>Com {brl(MINIMO_VALOR_CARTELA)} somados em produtos o cliente pode optar pela cartela programada e realizar o sorteio.</li>
+              <li>Com {brl(MINIMO_VALOR_CARTELA)} acumulados no fundo — ou seja, 10% do valor das compras — o cliente pode optar pela cartela programada e realizar o sorteio.</li>
               <li>Ao sortear a data, ele tem até o dia sorteado para completar os {META_PONTOS} pontos.</li>
               <li>Se não completar os pontos, não gostar do dia sorteado ou desistir, perde todos os pontos que já possui.</li>
             </ul>
