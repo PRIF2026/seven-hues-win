@@ -100,7 +100,7 @@ function Vendas() {
                 </p>
               ) : null}
               <p className="mt-2 rounded-md bg-muted px-2 py-1.5 text-xs text-muted-foreground">
-                A cartela precisa somar no mínimo {brl(MINIMO_VALOR_CARTELA)} em produtos para valer no sorteio.
+                A cartela programada exige {brl(MINIMO_VALOR_CARTELA)} acumulados no fundo de prêmios (10% do valor das compras).
               </p>
             </div>
 
