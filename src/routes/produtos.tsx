@@ -80,6 +80,60 @@ function Produtos() {
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 
+  const [painelEdicao, setPainelEdicao] = useState(false);
+  const [campoBusca, setCampoBusca] = useState<CampoBusca>("nome");
+  const [termo, setTermo] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [edit, setEdit] = useState({ ...vazio });
+  const seloEdit = seloPorPreco(numero(edit.preco));
+
+  const resultados = useMemo(() => {
+    const t = termo.trim().toLowerCase();
+    if (t === "") return [];
+    return produtos.filter((p) => {
+      const valor =
+        campoBusca === "preco" ? String(p.preco).replace(".", ",")
+        : campoBusca === "estoque" ? String(p.estoque)
+        : String(p[campoBusca] ?? "");
+      return valor.toLowerCase().includes(t);
+    });
+  }, [produtos, termo, campoBusca]);
+
+  const abrirFicha = (id: string) => {
+    const p = produtos.find((x) => x.id === id);
+    if (!p) return;
+    setEditId(id);
+    setEdit({
+      ean: p.ean === "—" ? "" : p.ean,
+      nome: p.nome,
+      marca: p.marca === "—" ? "" : p.marca,
+      categoria: p.categoria === "—" ? "" : p.categoria,
+      preco: String(p.preco).replace(".", ","),
+      estoque: String(p.estoque),
+      loja: p.lojaId ?? "",
+    });
+  };
+
+  const atualizacao = useMutation({
+    mutationFn: async () => {
+      if (!editId) return;
+      const { error } = await supabase.from("produtos").update({
+        codigo_barras: edit.ean.trim() || null, nome: edit.nome.trim(), marca: edit.marca.trim() || null,
+        categoria: edit.categoria.trim() || "Perfumaria", preco: numero(edit.preco),
+        estoque: Number(edit.estoque) || 0, selo: seloEdit, loja_id: edit.loja || null,
+      }).eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: cgsKeys.produtos });
+      setEditId(null); setTermo("");
+      toast.success("Produto atualizado.");
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+
+
   return (
     <>
       <PageHeader titulo="Cadastro de produtos" descricao="Leia o código de barras e o selo/pontuação são calculados automaticamente pelo preço." />
