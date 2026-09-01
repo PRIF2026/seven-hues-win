@@ -25,6 +25,18 @@ const formVazio = {
   nascimento: "", endereco: "", carteira: "",
 };
 
+const CAMPOS_BUSCA = [
+  { key: "nome", label: "Nome completo" },
+  { key: "associado", label: "Associado número" },
+  { key: "cpf", label: "CPF" },
+  { key: "telefone", label: "Telefone" },
+  { key: "email", label: "E-mail" },
+  { key: "nascimento", label: "Data de nascimento" },
+  { key: "endereco", label: "Endereço" },
+  { key: "carteira", label: "Número da carteira" },
+] as const;
+type CampoBusca = (typeof CAMPOS_BUSCA)[number]["key"];
+
 function Clientes() {
   const queryClient = useQueryClient();
   const clientesQuery = useClientes();
@@ -80,13 +92,62 @@ function Clientes() {
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 
+  const [painelEdicao, setPainelEdicao] = useState(false);
+  const [campoBusca, setCampoBusca] = useState<CampoBusca>("nome");
+  const [termo, setTermo] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [edit, setEdit] = useState({ ...formVazio });
+
+  const resultados = useMemo(() => {
+    const t = termo.trim().toLowerCase();
+    if (t === "") return [];
+    return clientes.filter((c) => {
+      const valor = campoBusca === "nascimento" ? dataBr(c.nascimento) : String(c[campoBusca] ?? "");
+      return valor.toLowerCase().includes(t);
+    });
+  }, [clientes, termo, campoBusca]);
+
+  const abrirFicha = (id: string) => {
+    const c = clientes.find((x) => x.id === id);
+    if (!c) return;
+    setEditId(id);
+    setEdit({
+      nome: c.nome,
+      associado: c.associado === "—" ? "" : c.associado,
+      cpf: c.cpf === "—" ? "" : c.cpf,
+      telefone: c.telefone === "—" ? "" : c.telefone,
+      email: c.email === "—" ? "" : c.email,
+      nascimento: c.nascimento,
+      endereco: c.endereco === "—" ? "" : c.endereco,
+      carteira: c.carteira === "—" ? "" : c.carteira,
+    });
+  };
+
+  const atualizacao = useMutation({
+    mutationFn: async () => {
+      if (!editId) return;
+      const { error } = await supabase.from("clientes").update({
+        nome: edit.nome.trim(), associado: edit.associado.trim(), cpf: edit.cpf.trim() || null,
+        telefone: edit.telefone.trim() || null, email: edit.email.trim() || null,
+        nascimento: edit.nascimento || null, endereco: edit.endereco.trim() || null, carteira: edit.carteira.trim() || null,
+      }).eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: cgsKeys.clientes });
+      setEditId(null); setTermo("");
+      toast.success("Cliente atualizado.");
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
   return (
     <>
       <PageHeader titulo="Controle de clientes" descricao="Cadastre e pesquise clientes por nome, CPF, número de associado ou carteira." />
 
       <SectionCard titulo="Cadastrar cliente">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {([
+          {(([
             ["nome", "Nome completo", "text"],
             ["associado", "ASSOCIADO NÚMERO", "text"],
             ["cpf", "CPF", "text"],
@@ -95,7 +156,7 @@ function Clientes() {
             ["nascimento", "Data de nascimento", "date"],
             ["endereco", "Endereço", "text"],
             ["carteira", "Número da carteira", "text"],
-          ] as const).map(([k, label, tipo]) => (
+          ] as const)).map(([k, label, tipo]) => (
             <label key={k} className="block text-xs text-muted-foreground">
               {label}
               <input
@@ -108,6 +169,95 @@ function Clientes() {
           ))}
         </div>
         <Button onClick={() => cadastro.mutate()} disabled={!podeSalvar || cadastro.isPending} className="mt-4">{cadastro.isPending ? "Salvando..." : "Cadastrar cliente"}</Button>
+      </SectionCard>
+
+      <SectionCard
+        titulo="Editar cliente"
+        acao={
+          <Button variant={painelEdicao ? "secondary" : "default"} onClick={() => { setPainelEdicao((v) => !v); setEditId(null); }}>
+            {painelEdicao ? "Fechar edição" : "Editar cliente"}
+          </Button>
+        }
+      >
+        {!painelEdicao ? (
+          <p className="text-sm text-muted-foreground">Clique em “Editar cliente” para pesquisar um cliente cadastrado e alterar seus dados.</p>
+        ) : (
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-xs text-muted-foreground">
+                Pesquisar por
+                <select
+                  value={campoBusca}
+                  onChange={(e) => { setCampoBusca(e.target.value as CampoBusca); setTermo(""); setEditId(null); }}
+                  className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                >
+                  {CAMPOS_BUSCA.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+              </label>
+              <label className="block text-xs text-muted-foreground">
+                Digite os dados de {CAMPOS_BUSCA.find((c) => c.key === campoBusca)?.label}
+                <input
+                  value={termo}
+                  onChange={(e) => { setTermo(e.target.value); setEditId(null); }}
+                  placeholder="Digite para pesquisar"
+                  className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </label>
+            </div>
+
+            {termo.trim() !== "" && !editId && (
+              <div className="rounded-lg border border-border">
+                {resultados.length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
+                ) : (
+                  resultados.slice(0, 12).map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => abrirFicha(c.id)}
+                      className="flex w-full items-center justify-between gap-3 border-b border-border/60 px-3 py-2 text-left text-sm last:border-0 hover:bg-muted/60"
+                    >
+                      <span className="font-medium text-foreground">{c.nome}</span>
+                      <span className="text-xs text-muted-foreground">{c.associado} · {c.cpf} · {c.carteira}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {editId && (
+              <div className="rounded-lg border border-border p-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {(([
+                    ["nome", "Nome completo", "text"],
+                    ["associado", "Associado número", "text"],
+                    ["cpf", "CPF", "text"],
+                    ["telefone", "Telefone", "tel"],
+                    ["email", "E-mail", "email"],
+                    ["nascimento", "Data de nascimento", "date"],
+                    ["endereco", "Endereço", "text"],
+                    ["carteira", "Número da carteira", "text"],
+                  ] as const)).map(([k, label, tipo]) => (
+                    <label key={k} className="block text-xs text-muted-foreground">
+                      {label}
+                      <input
+                        type={tipo}
+                        value={edit[k]}
+                        onChange={(e) => setEdit({ ...edit, [k]: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setEditId(null)}>Cancelar</Button>
+                  <Button onClick={() => atualizacao.mutate()} disabled={edit.nome.trim() === "" || edit.associado.trim() === "" || atualizacao.isPending}>
+                    {atualizacao.isPending ? "Salvando..." : "Salvar alterações"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
