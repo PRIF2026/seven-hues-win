@@ -231,9 +231,9 @@ export const VENDAS: Venda[] = vendasRaw.map(([id, data, hora, loja, func, clien
   return { id, data, hora, loja, funcionario: func, cliente, produto: p.nome, qtd, unitario: p.preco, selo: seloPorPreco(p.preco) };
 });
 
-/** Regra: 4+ unidades do mesmo produto na mesma compra = 1 selo apenas. */
+/** Regra: a partir de 3 unidades iguais na mesma compra/dia, pontua no máximo 2 selos. */
 export function pontosDaVenda(v: Venda) {
-  return v.qtd >= 4 ? v.selo : v.selo * v.qtd;
+  return v.selo * Math.min(v.qtd, 2);
 }
 
 export const VENDAS_POR_DIA = [
