@@ -23,6 +23,18 @@ export const Route = createFileRoute("/produtos")({
 
 const vazio = { ean: "", nome: "", marca: "", categoria: "", preco: "", estoque: "", loja: "" };
 
+const CAMPOS_BUSCA = [
+  { key: "ean", label: "Código de barras" },
+  { key: "nome", label: "Nome do produto" },
+  { key: "marca", label: "Marca" },
+  { key: "categoria", label: "Categoria" },
+  { key: "preco", label: "Preço (R$)" },
+  { key: "estoque", label: "Estoque" },
+  { key: "loja", label: "Loja" },
+] as const;
+type CampoBusca = (typeof CAMPOS_BUSCA)[number]["key"];
+
+
 function Produtos() {
   const queryClient = useQueryClient();
   const produtosQuery = useProdutos();
