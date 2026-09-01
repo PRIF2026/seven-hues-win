@@ -23,6 +23,18 @@ export const Route = createFileRoute("/produtos")({
 
 const vazio = { ean: "", nome: "", marca: "", categoria: "", preco: "", estoque: "", loja: "" };
 
+const CAMPOS_BUSCA = [
+  { key: "ean", label: "Código de barras" },
+  { key: "nome", label: "Nome do produto" },
+  { key: "marca", label: "Marca" },
+  { key: "categoria", label: "Categoria" },
+  { key: "preco", label: "Preço (R$)" },
+  { key: "estoque", label: "Estoque" },
+  { key: "loja", label: "Loja" },
+] as const;
+type CampoBusca = (typeof CAMPOS_BUSCA)[number]["key"];
+
+
 function Produtos() {
   const queryClient = useQueryClient();
   const produtosQuery = useProdutos();
@@ -67,6 +79,60 @@ function Produtos() {
     onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: cgsKeys.produtos }); setForm({ ...vazio }); toast.success("Produto cadastrado."); },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
+
+  const [painelEdicao, setPainelEdicao] = useState(false);
+  const [campoBusca, setCampoBusca] = useState<CampoBusca>("nome");
+  const [termo, setTermo] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [edit, setEdit] = useState({ ...vazio });
+  const seloEdit = seloPorPreco(numero(edit.preco));
+
+  const resultados = useMemo(() => {
+    const t = termo.trim().toLowerCase();
+    if (t === "") return [];
+    return produtos.filter((p) => {
+      const valor =
+        campoBusca === "preco" ? String(p.preco).replace(".", ",")
+        : campoBusca === "estoque" ? String(p.estoque)
+        : String(p[campoBusca] ?? "");
+      return valor.toLowerCase().includes(t);
+    });
+  }, [produtos, termo, campoBusca]);
+
+  const abrirFicha = (id: string) => {
+    const p = produtos.find((x) => x.id === id);
+    if (!p) return;
+    setEditId(id);
+    setEdit({
+      ean: p.ean === "—" ? "" : p.ean,
+      nome: p.nome,
+      marca: p.marca === "—" ? "" : p.marca,
+      categoria: p.categoria === "—" ? "" : p.categoria,
+      preco: String(p.preco).replace(".", ","),
+      estoque: String(p.estoque),
+      loja: p.lojaId ?? "",
+    });
+  };
+
+  const atualizacao = useMutation({
+    mutationFn: async () => {
+      if (!editId) return;
+      const { error } = await supabase.from("produtos").update({
+        codigo_barras: edit.ean.trim() || null, nome: edit.nome.trim(), marca: edit.marca.trim() || null,
+        categoria: edit.categoria.trim() || "Perfumaria", preco: numero(edit.preco),
+        estoque: Number(edit.estoque) || 0, selo: seloEdit, loja_id: edit.loja || null,
+      }).eq("id", editId);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: cgsKeys.produtos });
+      setEditId(null); setTermo("");
+      toast.success("Produto atualizado.");
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+
 
   return (
     <>
@@ -145,7 +211,119 @@ function Produtos() {
         </SectionCard>
       </div>
 
+      <SectionCard
+        titulo="Editar produto"
+        acao={
+          <Button variant={painelEdicao ? "secondary" : "default"} onClick={() => { setPainelEdicao((v) => !v); setEditId(null); }}>
+            {painelEdicao ? "Fechar edição" : "Editar produto"}
+          </Button>
+        }
+      >
+        {!painelEdicao ? (
+          <p className="text-sm text-muted-foreground">Clique em “Editar produto” para pesquisar um produto cadastrado e alterar seus dados.</p>
+        ) : (
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-xs text-muted-foreground">
+                Pesquisar por
+                <select
+                  value={campoBusca}
+                  onChange={(e) => { setCampoBusca(e.target.value as CampoBusca); setTermo(""); setEditId(null); }}
+                  className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                >
+                  {CAMPOS_BUSCA.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+              </label>
+              <label className="block text-xs text-muted-foreground">
+                Digite os dados de {CAMPOS_BUSCA.find((c) => c.key === campoBusca)?.label}
+                <input
+                  value={termo}
+                  onChange={(e) => { setTermo(e.target.value); setEditId(null); }}
+                  placeholder="Digite para pesquisar"
+                  className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </label>
+            </div>
+
+            {termo.trim() !== "" && !editId && (
+              <div className="rounded-lg border border-border">
+                {resultados.length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">Nenhum produto encontrado.</p>
+                ) : (
+                  resultados.slice(0, 12).map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => abrirFicha(p.id)}
+                      className="flex w-full items-center justify-between gap-3 border-b border-border/60 px-3 py-2 text-left text-sm last:border-0 hover:bg-muted/60"
+                    >
+                      <span className="font-medium text-foreground">{p.nome}</span>
+                      <span className="text-xs text-muted-foreground">{p.marca} · {p.ean} · {brl(p.preco)} · {p.loja}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {editId && (
+              <div className="rounded-lg border border-border p-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <label className="block text-xs text-muted-foreground sm:col-span-2">
+                    Código de barras
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <input value={edit.ean} onChange={(e) => setEdit({ ...edit, ean: e.target.value })} className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                      <BarcodeScanner onDetect={(c) => setEdit((f) => ({ ...f, ean: c }))} />
+                    </div>
+                  </label>
+                  <label className="block text-xs text-muted-foreground">
+                    Nome do produto
+                    <input value={edit.nome} onChange={(e) => setEdit({ ...edit, nome: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <label className="block text-xs text-muted-foreground">
+                    Marca
+                    <input value={edit.marca} onChange={(e) => setEdit({ ...edit, marca: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <label className="block text-xs text-muted-foreground">
+                    Categoria
+                    <input value={edit.categoria} onChange={(e) => setEdit({ ...edit, categoria: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <label className="block text-xs text-muted-foreground">
+                    Preço (R$)
+                    <input value={edit.preco} onChange={(e) => setEdit({ ...edit, preco: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <label className="block text-xs text-muted-foreground">
+                    Estoque
+                    <input type="number" min={0} value={edit.estoque} onChange={(e) => setEdit({ ...edit, estoque: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                  </label>
+                  <label className="block text-xs text-muted-foreground">
+                    Loja
+                    <select value={edit.loja} onChange={(e) => setEdit({ ...edit, loja: e.target.value })} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+                      <option value="">Selecione</option>{lojas.map((l) => <option key={l.id} value={l.id}>{l.nome}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-3">
+                    <Selo n={seloEdit} size="lg" />
+                    <div className="min-w-0 text-sm">
+                      <p className="font-semibold text-foreground">Selo {seloEdit} — {SELOS[seloEdit - 1]?.nome}</p>
+                      <p className="text-xs text-muted-foreground">{SELOS[seloEdit - 1]?.faixa}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setEditId(null)}>Cancelar</Button>
+                    <Button onClick={() => atualizacao.mutate()} disabled={edit.nome.trim() === "" || numero(edit.preco) <= 0 || atualizacao.isPending}>
+                      {atualizacao.isPending ? "Salvando..." : "Salvar alterações"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </SectionCard>
+
       <SectionCard titulo="Faixas de preço e pontuação">
+
         <SeloLegenda />
       </SectionCard>
 
