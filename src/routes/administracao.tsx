@@ -27,7 +27,7 @@ function Administracao() {
               ["Mínimo para sorteio", `${META_PONTOS} pontos`],
               ["Percentual destinado ao prêmio", "10%"],
               ["Somatório mínimo da cartela", brl(MINIMO_VALOR_CARTELA_PADRAO)],
-              ["Unidades iguais que geram 1 selo", "4 ou mais"],
+              ["Unidades iguais que pontuam", "no máximo 2 selos"],
               ["Validade da apresentação", "somente no dia sorteado"],
             ].map(([k, v]) => (
               <label key={k} className="block text-xs text-muted-foreground">
