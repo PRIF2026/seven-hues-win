@@ -69,7 +69,7 @@ function Receita() {
             {[
               "10% de todas as vendas de artigos de perfumaria do dia são destinados ao prêmio do mesmo dia do mês posterior.",
               "Havendo mais de uma loja, todas as vendas de perfumaria do dia são somadas na apuração.",
-              "Ao adquirir 4 ou mais unidades do mesmo produto na mesma compra, computa-se apenas um selo/pontuação.",
+              "A partir de 3 unidades do mesmo produto na mesma compra e no mesmo dia, a pontuação fica limitada a 2 selos.",
               "A cartela deve possuir no mínimo R$ 35,00 em produtos para determinadas regras de participação.",
             ].map((r, i) => (
               <li key={i} className="flex gap-3">
