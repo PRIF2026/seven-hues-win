@@ -301,7 +301,11 @@ function Produtos() {
                     </select>
                   </label>
                 </div>
+                <p className="mt-3 rounded-md bg-selo-3/25 px-2 py-1.5 text-xs font-medium text-foreground">
+                  O novo preço vale apenas para as compras feitas a partir de agora. As vendas já registradas e os pontos que os clientes receberam antes da alteração permanecem como estavam.
+                </p>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+
                   <div className="flex items-center gap-3">
                     <Selo n={seloEdit} size="lg" />
                     <div className="min-w-0 text-sm">
