@@ -50,7 +50,7 @@ function Vendas() {
       const { error } = await supabase.rpc("registrar_venda", { p_cliente_id: cliente, p_loja_id: loja, p_produto_id: p.id, p_quantidade: qtd });
       if (error) throw error;
     },
-    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: cgsKeys.all }); setQtd(1); toast.success("Venda, pontos e selos registrados."); },
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: cgsKeys.all }); setQtd(1); toast.success("Venda registrada, selo lançado e App atualizado."); },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 
@@ -104,7 +104,7 @@ function Vendas() {
               </p>
             </div>
 
-             <Button onClick={() => registro.mutate()} disabled={!cliente || !loja || !p || registro.isPending} className="w-full">{registro.isPending ? "Registrando..." : "Registrar venda e lançar selo"}</Button>
+             <Button onClick={() => registro.mutate()} disabled={!cliente || !loja || !p || registro.isPending} className="w-full">{registro.isPending ? "Registrando e atualizando App..." : "Registrar venda e lançar selo e atualizar App"}</Button>
           </div>
         </SectionCard>
 
