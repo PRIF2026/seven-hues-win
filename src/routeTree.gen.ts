@@ -20,6 +20,7 @@ import { Route as ProdutosRouteImport } from './routes/produtos'
 import { Route as ReceitaRouteImport } from './routes/receita'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as VendasRouteImport } from './routes/vendas'
+import { Route as ApiPublicCartelaRouteImport } from './routes/api/public/cartela'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +77,11 @@ const VendasRoute = VendasRouteImport.update({
   path: '/vendas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCartelaRoute = ApiPublicCartelaRouteImport.update({
+  id: '/api/public/cartela',
+  path: '/api/public/cartela',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/receita': typeof ReceitaRoute
   '/relatorios': typeof RelatoriosRoute
   '/vendas': typeof VendasRoute
+  '/api/public/cartela': typeof ApiPublicCartelaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/receita': typeof ReceitaRoute
   '/relatorios': typeof RelatoriosRoute
   '/vendas': typeof VendasRoute
+  '/api/public/cartela': typeof ApiPublicCartelaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/receita': typeof ReceitaRoute
   '/relatorios': typeof RelatoriosRoute
   '/vendas': typeof VendasRoute
+  '/api/public/cartela': typeof ApiPublicCartelaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/receita'
     | '/relatorios'
     | '/vendas'
+    | '/api/public/cartela'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/receita'
     | '/relatorios'
     | '/vendas'
+    | '/api/public/cartela'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/receita'
     | '/relatorios'
     | '/vendas'
+    | '/api/public/cartela'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   ReceitaRoute: typeof ReceitaRoute
   RelatoriosRoute: typeof RelatoriosRoute
   VendasRoute: typeof VendasRoute
+  ApiPublicCartelaRoute: typeof ApiPublicCartelaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VendasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cartela': {
+      id: '/api/public/cartela'
+      path: '/api/public/cartela'
+      fullPath: '/api/public/cartela'
+      preLoaderRoute: typeof ApiPublicCartelaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReceitaRoute: ReceitaRoute,
   RelatoriosRoute: RelatoriosRoute,
   VendasRoute: VendasRoute,
+  ApiPublicCartelaRoute: ApiPublicCartelaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
