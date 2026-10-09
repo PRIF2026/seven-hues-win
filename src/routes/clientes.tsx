@@ -79,11 +79,11 @@ function Clientes() {
   const podeSalvar = form.nome.trim() !== "" && form.associado.trim() !== "";
   const cadastro = useMutation({
     mutationFn: async () => {
-      const carteira = form.carteira.trim() || `CGS-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
       const { data, error } = await supabase.from("clientes").insert({
         nome: form.nome.trim(), associado: form.associado.trim(), cpf: form.cpf.trim() || null,
         telefone: form.telefone.trim() || null, email: form.email.trim() || null,
-        nascimento: form.nascimento || null, endereco: form.endereco.trim() || null, carteira,
+        nascimento: form.nascimento || null, endereco: form.endereco.trim() || null,
+        carteira: form.carteira.trim() || null,
       }).select("id").single();
       if (error) throw error;
       return data.id;
