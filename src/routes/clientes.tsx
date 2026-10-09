@@ -148,21 +148,22 @@ function Clientes() {
       <SectionCard titulo="Cadastrar cliente">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {(([
-            ["nome", "Nome completo", "text"],
-            ["associado", "ASSOCIADO NÚMERO", "text"],
-            ["cpf", "CPF", "text"],
-            ["telefone", "Telefone", "tel"],
-            ["email", "E-mail", "email"],
-            ["nascimento", "Data de nascimento", "date"],
-            ["endereco", "Endereço", "text"],
-            ["carteira", "Número da cartela", "text"],
-          ] as const)).map(([k, label, tipo]) => (
+            ["nome", "Nome completo", "text", ""],
+            ["associado", "ASSOCIADO NÚMERO", "text", ""],
+            ["cpf", "CPF", "text", ""],
+            ["telefone", "Telefone", "tel", ""],
+            ["email", "E-mail", "email", ""],
+            ["nascimento", "Data de nascimento", "date", ""],
+            ["endereco", "Endereço", "text", ""],
+            ["carteira", "Número da cartela", "text", "Ex.: CGS-000123 — deixe em branco para gerar automaticamente"],
+          ] as const)).map(([k, label, tipo, ph]) => (
             <label key={k} className="block text-xs text-muted-foreground">
               {label}
               <input
                 type={tipo}
                 value={form[k]}
                 onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+                placeholder={ph}
                 className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
               />
             </label>
