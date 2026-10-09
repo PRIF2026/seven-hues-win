@@ -155,7 +155,7 @@ function Clientes() {
             ["email", "E-mail", "email", ""],
             ["nascimento", "Data de nascimento", "date", ""],
             ["endereco", "Endereço", "text", ""],
-            ["carteira", "Número da cartela", "text", "Ex.: CGS-000123 — deixe em branco para gerar automaticamente"],
+            ["carteira", "Número da cartela", "text", "Ex.: CGS-000123"],
           ] as const)).map(([k, label, tipo, ph]) => (
             <label key={k} className="block text-xs text-muted-foreground">
               {label}
