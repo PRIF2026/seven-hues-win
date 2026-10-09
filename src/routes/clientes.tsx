@@ -12,7 +12,7 @@ export const Route = createFileRoute("/clientes")({
   head: () => ({
     meta: [
       { title: "Clientes · PROJETO 7 CORES – CGS" },
-      { name: "description", content: "Cadastro de clientes, carteira programada, pontos acumulados e histórico de compras e sorteios." },
+      { name: "description", content: "Cadastro de clientes, cartela programada, pontos acumulados e histórico de compras e sorteios." },
       { property: "og:title", content: "Clientes · PROJETO 7 CORES – CGS" },
       { property: "og:description", content: "Carteira programada, pontos e histórico de cada cliente." },
     ],
@@ -33,7 +33,7 @@ const CAMPOS_BUSCA = [
   { key: "email", label: "E-mail" },
   { key: "nascimento", label: "Data de nascimento" },
   { key: "endereco", label: "Endereço" },
-  { key: "carteira", label: "Número da carteira" },
+  { key: "carteira", label: "Número da cartela" },
 ] as const;
 type CampoBusca = (typeof CAMPOS_BUSCA)[number]["key"];
 
@@ -143,7 +143,7 @@ function Clientes() {
 
   return (
     <>
-      <PageHeader titulo="Controle de clientes" descricao="Cadastre e pesquise clientes por nome, CPF, número de associado ou carteira." />
+      <PageHeader titulo="Controle de clientes" descricao="Cadastre e pesquise clientes por nome, CPF, número de associado ou cartela." />
 
       <SectionCard titulo="Cadastrar cliente">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -155,7 +155,7 @@ function Clientes() {
             ["email", "E-mail", "email"],
             ["nascimento", "Data de nascimento", "date"],
             ["endereco", "Endereço", "text"],
-            ["carteira", "Número da carteira", "text"],
+            ["carteira", "Número da cartela", "text"],
           ] as const)).map(([k, label, tipo]) => (
             <label key={k} className="block text-xs text-muted-foreground">
               {label}
@@ -235,7 +235,7 @@ function Clientes() {
                     ["email", "E-mail", "email"],
                     ["nascimento", "Data de nascimento", "date"],
                     ["endereco", "Endereço", "text"],
-                    ["carteira", "Número da carteira", "text"],
+                    ["carteira", "Número da cartela", "text"],
                   ] as const)).map(([k, label, tipo]) => (
                     <label key={k} className="block text-xs text-muted-foreground">
                       {label}
@@ -263,7 +263,7 @@ function Clientes() {
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <SectionCard titulo={`Clientes (${lista.length})`}>
           <input
-            placeholder="Nome, CPF, associado ou carteira"
+            placeholder="Nome, CPF, associado ou cartela"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="mb-3 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
