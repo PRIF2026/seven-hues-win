@@ -121,7 +121,7 @@ function Vendas() {
         </SectionCard>
 
         <SectionCard
-          titulo={`Vendas registradas${dia ? ` · ${format(dia, "dd/MM/yyyy")}` : ""} · ${brl(totais.valor)} · ${totais.pontos} pontos`}
+          titulo={`${dia ? `Vendas de ${format(dia, "dd/MM/yyyy")}` : "Vendas registradas"} · ${brl(totais.valor)} · ${totais.pontos} pontos`}
           acao={
             <div className="flex items-center gap-2">
               <Popover>
@@ -130,12 +130,12 @@ function Vendas() {
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "h-8 w-[190px] justify-start text-left text-xs font-normal",
+                      "h-8 w-[150px] justify-start text-left text-xs font-normal",
                       !dia && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {dia ? format(dia, "dd/MM/yyyy") : "Escolher dia, mês e ano"}
+                    {dia ? format(dia, "dd/MM/yyyy") : "Dia, mês e ano"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
