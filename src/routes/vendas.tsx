@@ -2,11 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { PageHeader, SectionCard, Selo } from "@/components/cgs/ui-bits";
 import { brl, dataBr, MINIMO_VALOR_CARTELA, type SeloNumber } from "@/lib/cgs-data";
 import { supabase } from "@/integrations/supabase/client";
 import { cgsKeys, getErrorMessage, useClientes, useLojas, useProdutos, useVendas } from "@/lib/cgs-db";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/vendas")({
   head: () => ({
@@ -30,18 +35,25 @@ function Vendas() {
   const [qtd, setQtd] = useState(1);
   const [cliente, setCliente] = useState("");
   const [loja, setLoja] = useState("");
+  const [dia, setDia] = useState<Date>();
 
   const p = produtos.find((x) => x.id === produto) ?? produtos[0];
   const selo = (p?.selo ?? 1) as SeloNumber;
   const pontos = selo * Math.min(qtd, 2);
   const total = Number(p?.preco ?? 0) * qtd;
 
+  const diaChave = useMemo(() => (dia ? format(dia, "yyyy-MM-dd") : ""), [dia]);
+  const vendasDoDia = useMemo(
+    () => (diaChave ? vendas.filter((v) => v.data === diaChave) : vendas),
+    [vendas, diaChave],
+  );
+
   const totais = useMemo(
     () => ({
-      valor: vendas.reduce((a, v) => a + Number(v.valor_unitario) * v.quantidade, 0),
-      pontos: vendas.reduce((a, v) => a + v.pontos, 0),
+      valor: vendasDoDia.reduce((a, v) => a + Number(v.valor_unitario) * v.quantidade, 0),
+      pontos: vendasDoDia.reduce((a, v) => a + v.pontos, 0),
     }),
-    [vendas],
+    [vendasDoDia],
   );
 
   const registro = useMutation({
@@ -108,7 +120,42 @@ function Vendas() {
           </div>
         </SectionCard>
 
-        <SectionCard titulo={`Vendas registradas · ${brl(totais.valor)} · ${totais.pontos} pontos`}>
+        <SectionCard
+          titulo={`Vendas registradas${dia ? ` · ${format(dia, "dd/MM/yyyy")}` : ""} · ${brl(totais.valor)} · ${totais.pontos} pontos`}
+          acao={
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 w-[190px] justify-start text-left text-xs font-normal",
+                      !dia && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {dia ? format(dia, "dd/MM/yyyy") : "Escolher dia, mês e ano"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={dia}
+                    onSelect={setDia}
+                    captionLayout="dropdown"
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {dia ? (
+                <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setDia(undefined)}>
+                  Todos os dias
+                </Button>
+              ) : null}
+            </div>
+          }
+        >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
@@ -120,7 +167,13 @@ function Vendas() {
                 </tr>
               </thead>
               <tbody>
-              {vendas.map((v) => (
+                {vendasDoDia.length === 0 ? (
+                  <tr>
+                    <td colSpan={12} className="py-6 text-center text-sm text-muted-foreground">
+                      {dia ? `Nenhuma venda registrada em ${format(dia, "dd/MM/yyyy")}.` : "Nenhuma venda registrada."}
+                    </td>
+                  </tr>
+                ) : vendasDoDia.map((v) => (
                   <tr key={v.id} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-3 font-mono text-xs">{v.id}</td>
                     <td className="py-2.5 pr-3">{dataBr(v.data)}</td>
