@@ -121,7 +121,7 @@ function Vendas() {
         </SectionCard>
 
         <SectionCard
-          titulo={`${dia ? `Vendas de ${format(dia, "dd/MM/yyyy")}` : "Vendas registradas"} · ${brl(totais.valor)} · ${totais.pontos} pontos`}
+          titulo={`${dia ? format(dia, "dd/MM/yyyy") : "Vendas registradas"} · ${brl(totais.valor)} · ${totais.pontos} pontos`}
           acao={
             <div className="flex items-center gap-2">
               <Popover>
